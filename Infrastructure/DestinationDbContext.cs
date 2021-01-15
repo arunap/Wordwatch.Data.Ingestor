@@ -1,19 +1,19 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.Configuration;
 using Wordwatch.Data.Ingestor.Application.Interfaces;
+using Wordwatch.Data.Ingestor.Application.Models;
 
 namespace Wordwatch.Data.Ingestor.Infrastructure
 {
     public class DestinationDbContext : ApplicationDbContext, ITargetDbContext
     {
-        private string _connectionString;
-        public DestinationDbContext()
+        private readonly ApplicationSettings _applicationSettings;
+        public DestinationDbContext(ApplicationSettings applicationSettings)
         {
-            _connectionString = ConfigurationManager.ConnectionStrings["Destination"].ConnectionString;
+            _applicationSettings = applicationSettings;
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer("Data Source=SL-ARUNAP;Initial Catalog=wordwatch_tests;Integrated Security=True;Connect Timeout=0;"); //TODO
+            optionsBuilder.UseSqlServer(_applicationSettings.ConnectionStrings.Target, o => o.CommandTimeout(1000)); //TODO
         }
     }
 }

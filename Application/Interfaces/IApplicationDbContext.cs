@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
@@ -32,12 +33,21 @@ namespace Wordwatch.Data.Ingestor.Application.Interfaces
 
         Task<bool> DataExistsAsync<T>() where T : class;
 
-        Task<bool> TableExistsAsync<T>() where T : class;
+        Task<bool> TableExistsAsync<T>(string schema = "dbo") where T : class;
 
         Task<int> TableRowCountAsync<T>() where T : class;
+
+        Task ExecuteRawSql(string sql, SqlParameter[] parameters = null, CancellationToken cancellationToken = default);
     }
 
-    public interface ISourceDbContext : IApplicationDbContext { DbSet<IngestorInfo> IngestorInfos { get; set; } Task EnsureMigrationAsync(CancellationToken cancellationToken); }
+    public interface ISourceDbContext : IApplicationDbContext
+    {
+        DbSet<IngestorInfo> IngestorInfos { get; set; }
+
+        DbSet<SyncedTableInfo> SyncedTableInfo { get; set; }
+
+        Task EnsureMigrationAsync(CancellationToken cancellationToken);
+    }
 
     public interface ITargetDbContext : IApplicationDbContext { }
 }

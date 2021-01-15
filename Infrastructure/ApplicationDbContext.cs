@@ -1,4 +1,5 @@
 ﻿using EFCore.BulkExtensions;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ using Wordwatch.Data.Ingestor.Domain.Entities;
 namespace Wordwatch.Data.Ingestor.Infrastructure
 {
     public abstract class ApplicationDbContext : DbContext, IApplicationDbContext
-    { 
+    {
         public DbSet<Call> Calls { get; set; }
         public DbSet<MediaStub> MediaStubs { get; set; }
         public DbSet<VoxStub> VoxStubs { get; set; }
@@ -84,16 +85,33 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
             return await dbSet.AnyAsync();
         }
 
-        public async Task<bool> TableExistsAsync<T>() where T : class
+        public async Task<bool> TableExistsAsync<T>(string schema = "dbo") where T : class
         {
-            DbSet<T> dbSet = this.Set<T>();
-            return await dbSet.AnyAsync();
+            bool exists = false;
+            var conn = Database.GetDbConnection();
+            if (conn.State.Equals(System.Data.ConnectionState.Closed))
+                await conn.OpenAsync();
+
+            using (var command = conn.CreateCommand())
+            {
+                command.CommandText = $"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{typeof(T).Name}'";
+                exists = await command.ExecuteScalarAsync() != null;
+            }
+
+            return exists;
         }
 
         public async Task<int> TableRowCountAsync<T>() where T : class
         {
             DbSet<T> dbSet = this.Set<T>();
             return await dbSet.CountAsync();
+        }
+
+        public async Task ExecuteRawSql(string sql, SqlParameter[] parameters = null, CancellationToken cancellationToken = default)
+        {
+            if (parameters == null) parameters = new SqlParameter[] { };
+
+            await this.Database.ExecuteSqlRawAsync(sql, parameters, cancellationToken);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

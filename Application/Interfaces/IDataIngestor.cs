@@ -17,6 +17,6 @@ namespace Wordwatch.Data.Ingestor.Application.Interfaces
 
         public void RegisterProgressCallBacks(IProgress<CallIngestorInfo> progressCallback);
 
-        public Task<SourceDataSummary> GetSourceDataSummaryAsync();
+        public Task<SourceTableInfo> GetSourceDataSummaryAsync();
     }
 }

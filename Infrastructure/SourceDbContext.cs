@@ -1,27 +1,26 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.SqlServer.Internal;
-using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Configuration;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Wordwatch.Data.Ingestor.Application.Enums;
 using Wordwatch.Data.Ingestor.Application.Interfaces;
+using Wordwatch.Data.Ingestor.Application.Models;
 using Wordwatch.Data.Ingestor.Domain.Entities;
 
 namespace Wordwatch.Data.Ingestor.Infrastructure
 {
     public class SourceDbContext : ApplicationDbContext, ISourceDbContext
     {
-        private string _connectionString;
-        public SourceDbContext()
+        private readonly ApplicationSettings _applicationSettings;
+        public SourceDbContext(ApplicationSettings applicationSettings)
         {
-            _connectionString = ConfigurationManager.ConnectionStrings["source"].ConnectionString;
+            _applicationSettings = applicationSettings;
         }
 
         public DbSet<IngestorInfo> IngestorInfos { get; set; }
+        public DbSet<SyncedTableInfo> SyncedTableInfo { get; set; }
 
         public async Task EnsureMigrationAsync(CancellationToken cancellationToken)
         {
@@ -32,11 +31,7 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
         {
             if (!optionsBuilder.IsConfigured)
             {
-                SqlServerDbContextOptionsBuilder b = new SqlServerDbContextOptionsBuilder(optionsBuilder);
-                b.CommandTimeout(1000);
-                b.MigrationsHistoryTable("__DataMigrationsHistory", "dbo");
-
-                optionsBuilder.UseSqlServer(_connectionString);
+                optionsBuilder.UseSqlServer(_applicationSettings.ConnectionStrings.Source, o => o.CommandTimeout(1000));
             }
 
             base.OnConfiguring(optionsBuilder);
@@ -49,6 +44,10 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
             modelBuilder.Entity<IngestorInfo>().Property(x => x.DataIngestStatus).HasDefaultValue<DataIngestStatus>(DataIngestStatus.Pending);
 
             modelBuilder.Entity<IngestorInfo>().Property(x => x.SyncedToElastic).HasDefaultValue<bool>(false);
+
+            modelBuilder.Entity<SyncedTableInfo>().Property(x => x.Id).ValueGeneratedOnAdd();
+            modelBuilder.Entity<SyncedTableInfo>().Property(x => x.RelatedTable).HasMaxLength(15);
+            modelBuilder.Entity<SyncedTableInfo>().ToTable("SyncedTableInfo", "dbo");
 
             modelBuilder.Entity<IngestorInfo>().ToTable("IngestorInfo", "dbo");
 

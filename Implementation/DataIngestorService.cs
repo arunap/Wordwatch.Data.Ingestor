@@ -1,15 +1,12 @@
-﻿using Microsoft.VisualBasic;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Wordwatch.Data.Ingestor.Application.Interfaces;
 using Wordwatch.Data.Ingestor.Application.Models;
 using Wordwatch.Data.Ingestor.Domain.Entities;
-using Wordwatch.Data.Ingestor.Infrastructure;
 
 namespace Wordwatch.Data.Ingestor.Implementation
 {
@@ -23,7 +20,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
         private readonly int _ingestBatchSize = 1000;
         private readonly int _queringBatchSize = 100000;
 
-        public SourceDataSummary _sourceDataSummary = new SourceDataSummary();
+        public SourceTableInfo _sourceDataSummary = new SourceTableInfo();
 
         private DataIngestorService()
         {
@@ -170,7 +167,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
             _progressCallback?.Report(new CallIngestorInfo { Message = message });
         }
 
-        public async Task<SourceDataSummary> GetSourceDataSummaryAsync()
+        public async Task<SourceTableInfo> GetSourceDataSummaryAsync()
         {
             NotifyProgress($"Started - Loading source call tables data information.");
             var totalCalls = await _sourceDbContext.TableRowCountAsync<Call>();
