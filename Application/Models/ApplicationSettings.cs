@@ -8,6 +8,7 @@ namespace Wordwatch.Data.Ingestor.Application.Models
         public int QueringBatchSize { get; set; } = 10000;
         public Guid? StorageLocationId { get; set; }
         public ConnectionStrings ConnectionStrings { get; set; }
+        public int CommandTimeout { get; set; } = 60 * 60; // 1hour
     }
     public class ConnectionStrings
     {

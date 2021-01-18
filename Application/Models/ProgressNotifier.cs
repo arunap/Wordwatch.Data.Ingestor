@@ -1,4 +1,4 @@
-﻿using Wordwatch.Data.Ingestor.Application.Enums;
+﻿using Wordwatch.Data.Ingestor.Application.Constants;
 
 namespace Wordwatch.Data.Ingestor.Application.Models
 {

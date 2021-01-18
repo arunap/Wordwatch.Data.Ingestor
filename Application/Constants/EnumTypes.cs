@@ -1,4 +1,4 @@
-﻿namespace Wordwatch.Data.Ingestor.Application.Enums
+﻿namespace Wordwatch.Data.Ingestor.Application.Constants
 {
     public enum DataIngestStatus
     {
@@ -8,11 +8,14 @@
         Completed = 3
     }
 
-    public enum SyncTableNames
+    public enum MigrationMessageActions
     {
-        Calls = 0,
-        MediaStubs = 1,
-        VoxStubs = 2
+        Started,
+        Completed,
+        Error,
+        Reading,
+        Migrated,
+        Migrating
     }
 
     public enum UIFields
@@ -28,7 +31,7 @@
         SourceVoxStubCount = 5,
         TargetIngestedVoxStubCount = 6,
 
-        CallLastSyncedAt  = 7,
+        CallLastSyncedAt = 7,
         MediaStubsLastSyncedAt = 8,
         VoxStubsLastSyncedAt = 9,
         CallsMinDate = 10,

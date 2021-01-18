@@ -1,94 +1,33 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Windows.Forms;
-using Wordwatch.Data.Ingestor.Application.Enums;
-using Wordwatch.Data.Ingestor.Application.Interfaces;
+using Wordwatch.Data.Ingestor.Application.Constants;
 using Wordwatch.Data.Ingestor.Application.Models;
-using Wordwatch.Data.Ingestor.Implementation;
-using Wordwatch.Data.Ingestor.Infrastructure;
 
-namespace Wordwatch.Data.Ingestor
+namespace Wordwatch.Data.Ingestor.Application.Helpers
 {
-    public partial class Form1 : Form
+    public class ProgressResults
     {
-        private Dictionary<UIFields, string> _keyValuePair;
-        private readonly ApplicationSettings _applicationSettings;
-        private readonly ILogger<Form1> _logger;
-        private readonly IApplicationDbContext _sourceDbContext;
-        private readonly IApplicationDbContext _targetDbContext;
-        private readonly IDataIngestor _dataIngestor;
-        private IProgress<CallIngestorInfo> _progressCallback;
+        public string Message { get; set; }
+        public string SourceText { get; set; }
+        public string TargetText { get; set; }
+        public int CompletionValue { get; set; }
+    }
 
-        private Form1()
+    public class ProgressObserverHelper
+    {
+        private Dictionary<UIFields, string> _keyValuePair = new Dictionary<UIFields, string>();
+        public ProgressObserverHelper()
         {
-            _progressCallback = new Progress<CallIngestorInfo>(p => UpdateProgress(p));
-            _dataIngestor.RegisterProgressCallBacks(_progressCallback);
-
-            InitializeComponent();
-        }
-
-        public Form1(ILogger<Form1> logger, IOptions<ApplicationSettings> applicationSettings)
-        {
-            _logger = logger;
-            _applicationSettings = applicationSettings.Value;
-
-            _sourceDbContext = new SourceDbContext(_applicationSettings);
-            _targetDbContext = new DestinationDbContext(_applicationSettings);
-            _dataIngestor = new DataIngestorService(_sourceDbContext, _targetDbContext);
-
-            _progressCallback = new Progress<CallIngestorInfo>(p => UpdateProgress(p));
-            _dataIngestor.RegisterProgressCallBacks(_progressCallback);
-
-            InitializeComponent();
-            _logger.LogInformation("started!");
-        }
-
-        private void UpdateProgress(CallIngestorInfo info)
-        {
-            ListViewItem viewItem = new ListViewItem();
-            viewItem.Text = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            viewItem.SubItems.Add(info.Message);
-
-            listView1.Items.Add(viewItem);
-
-            listView1.EnsureVisible(listView1.Items.Count - 1);
-        }
-
-        private async void buttonStart_Click(object sender, EventArgs e)
-        {
-            // buttonStart.Enabled = false;
-            await _dataIngestor.StartAync(default);
-        }
-
-        private async void Form1_Load(object sender, EventArgs e)
-        {
-            _keyValuePair = new Dictionary<UIFields, string>();
             foreach (UIFields foo in Enum.GetValues(typeof(UIFields)))
             {
                 _keyValuePair.Add(foo, "");
             }
-
-            CallIngestorService service = new CallIngestorService(_sourceDbContext, _targetDbContext, _applicationSettings);
-            await service.ExecuteIterationsAsync(Literals.SyncTableNames.CallsTable, 2556, UpdateUI);
         }
-
-        private void UpdateUI(ProgressNotifier notifier)
+        public ProgressResults WatchProgress(ProgressNotifier notifier)
         {
-            if (!string.IsNullOrEmpty(notifier.Message))
-            {
-                ListViewItem viewItem = new ListViewItem { Text = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") };
-                viewItem.SubItems.Add(notifier.Message);
-                listView1.Items.Add(viewItem);
-                listView1.EnsureVisible(listView1.Items.Count - 1);
-
-                _logger.LogInformation(notifier.Message);
-            }
-
             if (notifier.FieldValue == null)
-                return;
+                return null;
 
             switch (notifier.Field)
             {
@@ -135,10 +74,7 @@ namespace Wordwatch.Data.Ingestor
             sourceText.Append($"Calls: {sourceCallCount:N0} {Environment.NewLine}");
             sourceText.Append($"MediaStubs: {sourceMediaCount:N0} {Environment.NewLine}");
             sourceText.Append($"VoxStubs: {sourceVoxCount:N0} {Environment.NewLine}");
-
             sourceText.Append($"Dates: {_keyValuePair[UIFields.CallsMinDate]} - {_keyValuePair[UIFields.CallsMaxDate]} ({_keyValuePair[UIFields.SourceCallDistribution]})");
-
-            labelSource.Text = sourceText.ToString();
 
             int.TryParse(_keyValuePair[UIFields.TargetIngestedCallCount], out int ingetedCalls);
             int.TryParse(_keyValuePair[UIFields.TargetIngestedMediaStubCount], out int ingestedMedia);
@@ -152,8 +88,21 @@ namespace Wordwatch.Data.Ingestor
             targetText.Append($"Calls: {ingetedCalls:N0}, Synced On: {_keyValuePair[UIFields.CallLastSyncedAt]}{Environment.NewLine}");
             targetText.Append($"MediaStubs: {ingestedMedia:N0} Synced On: {_keyValuePair[UIFields.MediaStubsLastSyncedAt]}{Environment.NewLine}");
             targetText.Append($"VoxStubs: {ingestedVox:N0} Synced On: {_keyValuePair[UIFields.VoxStubsLastSyncedAt]}{Environment.NewLine}");
-            targetText.Append($"Days Pending: {Math.Round((maxDate - synced).TotalDays)} ({(sourceCallCount - ingetedCalls).ToString("N0")}) ");
-            labelTarget.Text = targetText.ToString();
+
+            if (synced == DateTimeOffset.MinValue)
+                targetText.Append($"Days Pending: {_keyValuePair[UIFields.SourceCallDistribution]} ({sourceCallCount - ingetedCalls:N0})");
+            else
+                targetText.Append($"Days Pending: { Math.Round((maxDate - synced).TotalDays)} ({sourceCallCount - ingetedCalls:N0}) ");
+
+            var args = new ProgressResults
+            {
+                Message = notifier.Message,
+                SourceText = sourceText.ToString(),
+                TargetText = targetText.ToString(),
+                CompletionValue = (ingetedCalls / sourceCallCount) * 100
+            };
+
+            return args;
         }
     }
 }

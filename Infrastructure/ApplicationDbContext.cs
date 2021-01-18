@@ -7,12 +7,12 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Wordwatch.Data.Ingestor.Application.Interfaces;
+using Wordwatch.Data.Ingestor.Application.Constants;
 using Wordwatch.Data.Ingestor.Domain.Entities;
 
 namespace Wordwatch.Data.Ingestor.Infrastructure
 {
-    public abstract class ApplicationDbContext : DbContext, IApplicationDbContext
+    public abstract class ApplicationDbContext : DbContext
     {
         public DbSet<Call> Calls { get; set; }
         public DbSet<MediaStub> MediaStubs { get; set; }
@@ -25,7 +25,7 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
 
         public async Task BatchInsertAsync<T>(List<T> entityList, CancellationToken cancellationToken) where T : class
         {
-            await this.BulkInsertAsync<T>(entityList, bulkConfig: new BulkConfig { BatchSize = 2000 }, progress: null, cancellationToken: cancellationToken);
+            await this.BulkInsertAsync<T>(entityList, cancellationToken: cancellationToken);
         }
 
         public async Task<IEnumerable<TEntity>> BatchReadAsync<TEntity>(
@@ -101,10 +101,26 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
             return exists;
         }
 
-        public async Task<int> TableRowCountAsync<T>() where T : class
+        public async Task<int> TableRowCountByIdAsync<T>() where T : class
         {
-            DbSet<T> dbSet = this.Set<T>();
-            return await dbSet.CountAsync();
+            var conn = Database.GetDbConnection();
+            if (conn.State.Equals(System.Data.ConnectionState.Closed))
+                await conn.OpenAsync();
+
+            int rowcount = 0;
+            using (var command = conn.CreateCommand())
+            {
+                var entityType = this.Model.FindEntityType(typeof(T));
+                var schema = entityType.GetSchema();
+                var tableName = entityType.GetTableName();
+
+                command.CommandText = $"SELECT COUNT(Id) FROM {schema}.{tableName}";
+                var scalarVal = await command.ExecuteScalarAsync();
+
+                int.TryParse(scalarVal.ToString(), out rowcount);
+            }
+
+            return rowcount;
         }
 
         public async Task ExecuteRawSql(string sql, SqlParameter[] parameters = null, CancellationToken cancellationToken = default)
@@ -120,9 +136,8 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
             modelBuilder.Entity<MediaStub>().ToTable("media_stubs");
             modelBuilder.Entity<VoxStub>().ToTable("vox_stubs");
 
-            //modelBuilder.Entity<Call>().Property(x => x.user_id).HasColumnType("UniqueIdentifier");
-
             modelBuilder.HasDefaultSchema("ww");
+
             base.OnModelCreating(modelBuilder);
         }
     }
