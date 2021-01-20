@@ -14,9 +14,9 @@ namespace Wordwatch.Data.Ingestor.Implementation
 {
     public sealed class InsertTableRowsService
     {
-        private DateTimeOffset? _callsLastSyncedAt;
-        private DateTimeOffset? _mediaStubsLastSyncedAt;
-        private DateTimeOffset? _voxStubsLastSyncedAt;
+        private DateTimeOffset _callsLastSyncedAt = DateTimeOffset.MinValue;
+        private DateTimeOffset _mediaStubsLastSyncedAt = DateTimeOffset.MinValue;
+        private DateTimeOffset _voxStubsLastSyncedAt = DateTimeOffset.MinValue;
         private readonly ILogger<InsertTableRowsService> _logger;
         private readonly SourceDbContext _sourceDbContext;
         private readonly TargetDbContext _targetDbContext;
@@ -32,9 +32,9 @@ namespace Wordwatch.Data.Ingestor.Implementation
             _applicationSettings = applicationSettings.Value;
         }
 
-        private async Task IngestTableRowsAsync(List<SyncedTableInfo> syncedTableInfos, string tableName, IProgress<ProgressNotifier> notifyProgress)
+        private async Task IngestTableRowsAsync(string tableName, IProgress<ProgressNotifier> notifyProgress)
         {
-            var dateAt = await GetLastSyncedAt(syncedTableInfos, tableName, notifyProgress);
+            var dateAt = await GetLastSyncedAt(tableName, notifyProgress);
 
             var min = dateAt;
             var max = dateAt.AddDays(1).AddSeconds(-1);
@@ -72,9 +72,9 @@ namespace Wordwatch.Data.Ingestor.Implementation
             await UpdateSyncedTableInfoAsync(tableName, min);
         }
 
-        private async Task<DateTimeOffset> GetLastSyncedAt(List<SyncedTableInfo> syncedTableInfos, string tableName, IProgress<ProgressNotifier> notifyProgress)
+        private async Task<DateTimeOffset> GetLastSyncedAt(string tableName, IProgress<ProgressNotifier> notifyProgress)
         {
-            DateTimeOffset? lastSyncedAt = syncedTableInfos.Where(x => x.RelatedTable == tableName).Select(x => x.LastSyncedAt).First();
+            DateTimeOffset? lastSyncedAt = _sourceDbContext.SyncedTableInfo.Where(x => x.RelatedTable == tableName).Select(x => x.LastSyncedAt).First();
 
             if (lastSyncedAt == null) // first time execution
             {
@@ -90,6 +90,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
                 {
                     lastSyncedAt = await _sourceDbContext.VoxStubs.MinAsync(x => x.created);
                 }
+
                 lastSyncedAt = new DateTimeOffset(lastSyncedAt.Value.Date, DateTimeOffset.UtcNow.Offset);
             }
             else
@@ -106,17 +107,14 @@ namespace Wordwatch.Data.Ingestor.Implementation
         {
             if (tableName == SyncTableNames.CallsTable)
             {
-                _callsLastSyncedAt = lastSyncedAt;
                 notifyProgress.Report(new ProgressNotifier { Field = UIFields.CallLastSyncedAt, FieldValue = lastSyncedAt });
             }
             if (tableName == SyncTableNames.MediaStubsTable)
             {
-                _mediaStubsLastSyncedAt = lastSyncedAt;
                 notifyProgress.Report(new ProgressNotifier { Field = UIFields.MediaStubsLastSyncedAt, FieldValue = lastSyncedAt });
             }
             if (tableName == SyncTableNames.VoxStubsTable)
             {
-                _voxStubsLastSyncedAt = lastSyncedAt;
                 notifyProgress.Report(new ProgressNotifier { Field = UIFields.VoxStubsLastSyncedAt, FieldValue = lastSyncedAt });
             }
         }
@@ -127,10 +125,10 @@ namespace Wordwatch.Data.Ingestor.Implementation
             await _sourceDbContext.ExecuteRawSql(sql);
         }
 
-        public async Task InitAsync(List<SyncedTableInfo> syncedTableInfos, string table, IProgress<ProgressNotifier> notifyProgress)
+        public async Task InitAsync(string table, IProgress<ProgressNotifier> notifyProgress)
         {
             for (int i = 0; i < 1000; i++)
-                await IngestTableRowsAsync(syncedTableInfos, table, notifyProgress);
+                await IngestTableRowsAsync(table, notifyProgress);
 
             notifyProgress.Report(new ProgressNotifier { Message = $"Source content moved to Target." });
         }

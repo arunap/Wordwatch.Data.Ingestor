@@ -53,12 +53,6 @@ namespace Wordwatch.Data.Ingestor
                 services.AddSingleton<TargetDbContext>();
 
                 services.AddSingleton<MainForm>();
-
-                //ProgressObserverHelper observerHelper = new ProgressObserverHelper();
-
-                //services.AddSingleton(observerHelper);
-                //services.AddSingleton<IProgress<ProgressNotifier>>(svr => new Progress<ProgressNotifier>(x => observerHelper.WatchProgress(x)));
-
             })
             .ConfigureLogging(logBuilder =>
             {

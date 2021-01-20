@@ -16,8 +16,8 @@ namespace Wordwatch.Data.Ingestor
         private Dictionary<UIFields, string> _keyValuePair;
         private readonly ILogger<MainForm> _logger;
         private readonly IMigrationActionService _migrationActionService;
-        private readonly IProgress<ProgressNotifier> _progressCallBack;
         private readonly ProgressObserverHelper _observerHelper = new ProgressObserverHelper();
+        private IProgress<ProgressNotifier> _progressCallBack;
 
         public MainForm(ILogger<MainForm> logger, IMigrationActionService migrationActionService)
         {
@@ -25,13 +25,17 @@ namespace Wordwatch.Data.Ingestor
 
             _logger = logger;
             _migrationActionService = migrationActionService;
-            _progressCallBack = new Progress<ProgressNotifier>(progress => UpdateUI(progress));
-
             _logger.LogInformation("InitializeComponent()!");
+
+            _progressCallBack = new Progress<ProgressNotifier>(p => UpdateUI(p));
         }
 
         private async void buttonStart_Click(object sender, EventArgs e)
         {
+            await Task.Run(async () =>
+            {
+                await _migrationActionService.StartAync(progress: _progressCallBack, cancellationToken: default);
+            });
         }
 
         public void UpdateUI(ProgressNotifier values)
@@ -50,9 +54,17 @@ namespace Wordwatch.Data.Ingestor
                     _logger.LogInformation(notifier.Message);
                 }
 
-                labelSource.Text = notifier.SourceText;
-                labelTarget.Text = notifier.TargetText;
-                progressBar1.Value = notifier.CompletionValue;
+                if (!string.IsNullOrEmpty(notifier.SourceText))
+                    labelSource.Text = notifier.SourceText;
+
+                if (!string.IsNullOrEmpty(notifier.TargetText))
+                    labelTarget.Text = notifier.TargetText;
+
+                if (notifier.CompletionValue > 0)
+                {
+                    progressBar1.Value = notifier.CompletionValue;
+                    labelProgress.Text = notifier.CompletionValue.ToString() + "%";
+                }
             }
         }
 

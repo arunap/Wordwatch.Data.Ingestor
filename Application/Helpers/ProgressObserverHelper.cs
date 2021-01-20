@@ -19,15 +19,23 @@ namespace Wordwatch.Data.Ingestor.Application.Helpers
         private Dictionary<UIFields, string> _keyValuePair = new Dictionary<UIFields, string>();
         public ProgressObserverHelper()
         {
-            foreach (UIFields foo in Enum.GetValues(typeof(UIFields)))
-            {
-                _keyValuePair.Add(foo, "");
-            }
+            _keyValuePair.Add(UIFields.CallsMaxDate, null);
+            _keyValuePair.Add(UIFields.CallsMinDate, null);
+            _keyValuePair.Add(UIFields.CallLastSyncedAt, null);
+            _keyValuePair.Add(UIFields.MediaStubsLastSyncedAt, null);
+            _keyValuePair.Add(UIFields.VoxStubsLastSyncedAt, null);
+            _keyValuePair.Add(UIFields.SourceCallCount, "0");
+            _keyValuePair.Add(UIFields.SourceCallDistribution, "0");
+            _keyValuePair.Add(UIFields.SourceMediaStubCount, "0");
+            _keyValuePair.Add(UIFields.SourceVoxStubCount, "0");
+            _keyValuePair.Add(UIFields.TargetIngestedCallCount, "0");
+            _keyValuePair.Add(UIFields.TargetIngestedMediaStubCount, "0");
+            _keyValuePair.Add(UIFields.TargetIngestedVoxStubCount, "0");
         }
         public ProgressResults WatchProgress(ProgressNotifier notifier)
         {
-            if (notifier.FieldValue == null)
-                return null;
+            if (notifier.FieldValue == null && !string.IsNullOrEmpty(notifier.Message))
+                return new ProgressResults { Message = notifier.Message };
 
             switch (notifier.Field)
             {
@@ -94,12 +102,14 @@ namespace Wordwatch.Data.Ingestor.Application.Helpers
             else
                 targetText.Append($"Days Pending: { Math.Round((maxDate - synced).TotalDays)} ({sourceCallCount - ingetedCalls:N0}) ");
 
+            var pValue = Math.Round((int.Parse(_keyValuePair[UIFields.TargetIngestedCallCount].ToString()) / double.Parse(sourceCallCount.ToString())) * 100);
+
             var args = new ProgressResults
             {
                 Message = notifier.Message,
                 SourceText = sourceText.ToString(),
                 TargetText = targetText.ToString(),
-                CompletionValue = (ingetedCalls / sourceCallCount) * 100
+                CompletionValue = int.Parse(pValue.ToString())
             };
 
             return args;

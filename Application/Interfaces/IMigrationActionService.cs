@@ -16,7 +16,5 @@ namespace Wordwatch.Data.Ingestor.Application.Interfaces
         public Task ResumeAync(IProgress<ProgressNotifier> progress, CancellationToken cancellationToken = default);
 
         public Task StopAync(IProgress<ProgressNotifier> progress, CancellationToken cancellationToken = default);
-
-        public void RegisterProgressCallBacks(IProgress<CallIngestorInfo> progressCallback);
     }
 }

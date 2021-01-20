@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Wordwatch.Data.Ingestor.Application.Constants;
 using Wordwatch.Data.Ingestor.Application.Interfaces;
 using Wordwatch.Data.Ingestor.Application.Models;
 using Wordwatch.Data.Ingestor.Domain.Entities;
@@ -53,18 +54,12 @@ namespace Wordwatch.Data.Ingestor.Implementation
 
         public async Task StartAync(IProgress<ProgressNotifier> progress, CancellationToken cancellationToken)
         {
-           // await _insertTableRowsService.InitAsync(_syncedTableInfo, string.Empty, null);
+            await _insertTableRowsService.InitAsync(SyncTableNames.CallsTable, progress);
         }
 
         public Task StopAync(IProgress<ProgressNotifier> progress, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
-
-        public void RegisterProgressCallBacks(IProgress<CallIngestorInfo> progressCallback)
-        {
-            throw new NotImplementedException();
-        }
-
     }
 }
