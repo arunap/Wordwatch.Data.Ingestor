@@ -37,6 +37,8 @@ namespace Wordwatch.Data.Ingestor.Application.Helpers
             if (notifier.FieldValue == null && !string.IsNullOrEmpty(notifier.Message))
                 return new ProgressResults { Message = notifier.Message };
 
+            if (notifier.FieldValue == null) return null;
+
             switch (notifier.Field)
             {
                 case UIFields.TargetIngestedCallCount:

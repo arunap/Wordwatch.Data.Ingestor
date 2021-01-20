@@ -30,14 +30,7 @@ namespace Wordwatch.Data.Ingestor
             _progressCallBack = new Progress<ProgressNotifier>(p => UpdateUI(p));
         }
 
-        private async void buttonStart_Click(object sender, EventArgs e)
-        {
-            await Task.Run(async () =>
-            {
-                await _migrationActionService.StartAync(progress: _progressCallBack, cancellationToken: default);
-            });
-        }
-
+       
         public void UpdateUI(ProgressNotifier values)
         {
             ProgressResults notifier = _observerHelper.WatchProgress(values);
@@ -72,16 +65,116 @@ namespace Wordwatch.Data.Ingestor
         {
             _logger.LogInformation("MainForm_Load()!");
 
-            _keyValuePair = new Dictionary<UIFields, string>();
-            foreach (UIFields foo in Enum.GetValues(typeof(UIFields)))
-            {
-                _keyValuePair.Add(foo, "");
-            }
+            buttonStart.Enabled = true;
+            buttonPause.Enabled = false;
+            buttonResume.Enabled = false;
+            buttonStop.Enabled = false;
 
             await Task.Run(async () =>
             {
                 await _migrationActionService.InitAsync(progress: _progressCallBack, cancellationToken: default);
             });
+        }
+
+        private void SetEnabledValue(bool startClicked = false, bool pausedClicked = false, bool resumeClicked = false, bool stopClicked = false, bool exitClicked = false)
+        {
+            if (startClicked)
+            {
+                buttonStart.Enabled = false;
+                buttonPause.Enabled = true;
+                buttonResume.Enabled = false;
+                buttonStop.Enabled = true;
+            }
+            else if (pausedClicked)
+            {
+                buttonStart.Enabled = false;
+                buttonPause.Enabled = false;
+                buttonResume.Enabled = true;
+                buttonStop.Enabled = true;
+            }
+            else if (resumeClicked)
+            {
+                buttonStart.Enabled = false;
+                buttonPause.Enabled = true;
+                buttonResume.Enabled = false;
+                buttonStop.Enabled = true;
+            }
+            else if (stopClicked)
+            {
+                buttonStart.Enabled = true;
+                buttonPause.Enabled = false;
+                buttonResume.Enabled = false;
+                buttonStop.Enabled = false;
+            }
+            else if (exitClicked)
+            {
+                buttonStart.Enabled = false;
+                buttonPause.Enabled = false;
+                buttonResume.Enabled = false;
+                buttonStop.Enabled = false;
+            }
+        }
+
+        private async void buttonStart_Click(object sender, EventArgs e)
+        {
+            var confirmed = MessageBox.Show("Are you sure you want to Start Migration?", "Start Action!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            if (confirmed == DialogResult.Yes)
+            {
+                SetEnabledValue(true, false, false, false, false);
+                await Task.Run(async () =>
+                {
+                    await _migrationActionService.StartAync(progress: _progressCallBack, cancellationToken: default);
+                });
+            }
+        }
+
+        private async void buttonExit_Click(object sender, EventArgs e)
+        {
+            var confirmed = MessageBox.Show("Are you sure you want to Exit Application?", "Exit Action!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            if (confirmed == DialogResult.Yes)
+            {
+                await Task.Run(async () =>
+                {
+                    await _migrationActionService.StopAync(progress: _progressCallBack, cancellationToken: default);
+                });
+            }
+        }
+
+        private async void buttonPause_Click(object sender, EventArgs e)
+        {
+            var confirmed = MessageBox.Show("Are you sure you want to Pause Migration?", "Pause Action!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            if (confirmed == DialogResult.Yes)
+            {
+                SetEnabledValue(pausedClicked: true);
+                await Task.Run(async () =>
+                {
+                    await _migrationActionService.Pause(progress: _progressCallBack, cancellationToken: default);
+                });
+            }
+        }
+
+        private async void buttonResume_Click(object sender, EventArgs e)
+        {
+            var confirmed = MessageBox.Show("Are you sure you want to Resume Migration?", "Resume Action!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            if (confirmed == DialogResult.Yes)
+            {
+                await Task.Run(async () =>
+                {
+                    await _migrationActionService.ResumeAync(progress: _progressCallBack, cancellationToken: default);
+                });
+            }
+        }
+
+        private async void buttonStop_Click(object sender, EventArgs e)
+        {
+            var confirmed = MessageBox.Show("Are you sure you want to Stop Migration?", "Stop Action!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            if (confirmed == DialogResult.Yes)
+            {
+                await Task.Run(async () =>
+                {
+                    await _migrationActionService.StopAync(progress: _progressCallBack, cancellationToken: default);
+                });
+            }
         }
     }
 }

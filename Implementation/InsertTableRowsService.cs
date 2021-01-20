@@ -127,10 +127,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
 
         public async Task InitAsync(string table, IProgress<ProgressNotifier> notifyProgress)
         {
-            for (int i = 0; i < 1000; i++)
-                await IngestTableRowsAsync(table, notifyProgress);
-
-            notifyProgress.Report(new ProgressNotifier { Message = $"Source content moved to Target." });
+            await IngestTableRowsAsync(table, notifyProgress);
         }
     }
 }

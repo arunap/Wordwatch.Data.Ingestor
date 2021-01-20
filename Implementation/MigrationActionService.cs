@@ -1,7 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Wordwatch.Data.Ingestor.Application.Constants;
@@ -20,8 +22,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
         private readonly ApplicationSettings _applicationSettings;
         private readonly SystemInitializerService _systemInitializer;
         private readonly InsertTableRowsService _insertTableRowsService;
-
-        private List<SyncedTableInfo> _syncedTableInfo;
+        private bool _pausedClicked = false;
 
         public MigrationActionService(
             ILogger<MigrationActionService> logger,
@@ -39,27 +40,79 @@ namespace Wordwatch.Data.Ingestor.Implementation
 
         public async Task InitAsync(IProgress<ProgressNotifier> _migrationProgress, CancellationToken cancellationToken)
         {
-            _syncedTableInfo = await _systemInitializer.InitTableAsync(_migrationProgress);
+            await _systemInitializer.InitTableAsync(_migrationProgress);
         }
 
-        public Task Pause(IProgress<ProgressNotifier> progress, CancellationToken cancellationToken)
+        public async Task Pause(IProgress<ProgressNotifier> notifyProgress, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            _pausedClicked = true;
+
+            notifyProgress.Report(new ProgressNotifier { Message = $"User Clicked Pause Action." });
+
+            notifyProgress.Report(new ProgressNotifier { Message = $"Please wait until the system finalizing Pause Operations." });
+
+            await Task.CompletedTask;
         }
 
-        public Task ResumeAync(IProgress<ProgressNotifier> progress, CancellationToken cancellationToken)
+        public async Task ResumeAync(IProgress<ProgressNotifier> notifyProgress, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            notifyProgress.Report(new ProgressNotifier { Message = $"User Clicked Resume Action." });
+           
+            await StartAync(notifyProgress, cancellationToken);
         }
 
-        public async Task StartAync(IProgress<ProgressNotifier> progress, CancellationToken cancellationToken)
+        public async Task StartAync(IProgress<ProgressNotifier> notifyProgress, CancellationToken cancellationToken)
         {
-            await _insertTableRowsService.InitAsync(SyncTableNames.CallsTable, progress);
+            int loopCount = await GetPendingIterationCountAsync();
+
+            int idx = 0;
+
+            while (idx <= loopCount && !_pausedClicked)
+            {
+                await _insertTableRowsService.InitAsync(SyncTableNames.CallsTable, notifyProgress);
+              //  await _insertTableRowsService.InitAsync(SyncTableNames.MediaStubsTable, notifyProgress);
+              //  await _insertTableRowsService.InitAsync(SyncTableNames.VoxStubsTable, notifyProgress);
+
+                idx++;
+            }
+
+            if (_pausedClicked)
+            {
+                notifyProgress.Report(new ProgressNotifier { Message = $"Migrations are successfully paused!." });
+            }
         }
 
-        public Task StopAync(IProgress<ProgressNotifier> progress, CancellationToken cancellationToken)
+        public async Task StopAync(IProgress<ProgressNotifier> notifyProgress, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            notifyProgress.Report(new ProgressNotifier { Message = $"User Clicked Stop Action." });
+
+            _pausedClicked = true;
+            notifyProgress.Report(new ProgressNotifier { Message = $"Please wait until the system finalizing Stop Operations." });
+
+            // Enable indexes.
+
+            await Task.CompletedTask;
+        }
+
+        private async Task<int> GetPendingIterationCountAsync()
+        {
+            var sourceCallMaxDate = await _sourceDbContext.Calls.MaxAsync(x => x.start_datetime);
+            var targetMaxSyncedDate = await _sourceDbContext.SyncedTableInfo.Where(x => x.RelatedTable == SyncTableNames.CallsTable).Select(d => d.LastSyncedAt).FirstAsync();
+
+            double rowCount = 0;
+
+            if (targetMaxSyncedDate == null || targetMaxSyncedDate.Value == DateTimeOffset.MinValue)
+            {
+                var sourceCallMinDate = await _sourceDbContext.Calls.MinAsync(x => x.start_datetime);
+
+                rowCount = Math.Round((sourceCallMaxDate - sourceCallMinDate).TotalDays);
+            }
+            else
+            {
+                rowCount = Math.Round((sourceCallMaxDate - targetMaxSyncedDate.Value).TotalDays);
+            }
+
+            return int.Parse(rowCount.ToString());
         }
     }
 }

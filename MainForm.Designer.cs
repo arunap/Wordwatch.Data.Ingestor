@@ -63,7 +63,7 @@ namespace Wordwatch.Data.Ingestor
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 1;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(770, 182);
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(854, 182);
             this.tableLayoutPanel1.TabIndex = 0;
             // 
             // groupBox2
@@ -72,9 +72,9 @@ namespace Wordwatch.Data.Ingestor
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox2.Controls.Add(this.labelTarget);
-            this.groupBox2.Location = new System.Drawing.Point(388, 3);
+            this.groupBox2.Location = new System.Drawing.Point(430, 3);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(379, 176);
+            this.groupBox2.Size = new System.Drawing.Size(421, 176);
             this.groupBox2.TabIndex = 1;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Target";
@@ -85,7 +85,7 @@ namespace Wordwatch.Data.Ingestor
             this.labelTarget.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.labelTarget.Location = new System.Drawing.Point(3, 19);
             this.labelTarget.Name = "labelTarget";
-            this.labelTarget.Size = new System.Drawing.Size(373, 154);
+            this.labelTarget.Size = new System.Drawing.Size(415, 154);
             this.labelTarget.TabIndex = 1;
             this.labelTarget.Text = "Target Connection String";
             this.labelTarget.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -98,7 +98,7 @@ namespace Wordwatch.Data.Ingestor
             this.groupBox1.Controls.Add(this.labelSource);
             this.groupBox1.Location = new System.Drawing.Point(3, 3);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(379, 176);
+            this.groupBox1.Size = new System.Drawing.Size(421, 176);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Source";
@@ -109,7 +109,7 @@ namespace Wordwatch.Data.Ingestor
             this.labelSource.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.labelSource.Location = new System.Drawing.Point(3, 19);
             this.labelSource.Name = "labelSource";
-            this.labelSource.Size = new System.Drawing.Size(373, 154);
+            this.labelSource.Size = new System.Drawing.Size(415, 154);
             this.labelSource.TabIndex = 0;
             this.labelSource.Text = "Source Connection String";
             this.labelSource.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -130,7 +130,7 @@ namespace Wordwatch.Data.Ingestor
             this.panel1.Location = new System.Drawing.Point(5, 5);
             this.panel1.Name = "panel1";
             this.panel1.Padding = new System.Windows.Forms.Padding(10);
-            this.panel1.Size = new System.Drawing.Size(790, 540);
+            this.panel1.Size = new System.Drawing.Size(874, 541);
             this.panel1.TabIndex = 0;
             // 
             // listView1
@@ -142,7 +142,8 @@ namespace Wordwatch.Data.Ingestor
             this.listView1.HideSelection = false;
             this.listView1.Location = new System.Drawing.Point(10, 208);
             this.listView1.Name = "listView1";
-            this.listView1.Size = new System.Drawing.Size(650, 289);
+            this.listView1.ShowItemToolTips = true;
+            this.listView1.Size = new System.Drawing.Size(745, 289);
             this.listView1.TabIndex = 9;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = System.Windows.Forms.View.Details;
@@ -150,33 +151,34 @@ namespace Wordwatch.Data.Ingestor
             // EventTime
             // 
             this.EventTime.Text = "Event Time";
-            this.EventTime.Width = 150;
+            this.EventTime.Width = 130;
             // 
             // Action
             // 
             this.Action.Text = "Action";
-            this.Action.Width = 450;
+            this.Action.Width = 580;
             // 
             // buttonExit
             // 
             this.buttonExit.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.buttonExit.Location = new System.Drawing.Point(677, 438);
+            this.buttonExit.Location = new System.Drawing.Point(761, 438);
             this.buttonExit.Name = "buttonExit";
             this.buttonExit.Size = new System.Drawing.Size(103, 45);
             this.buttonExit.TabIndex = 8;
             this.buttonExit.Text = "Exist";
             this.buttonExit.UseVisualStyleBackColor = true;
+            this.buttonExit.Click += new System.EventHandler(this.buttonExit_Click);
             // 
             // progressBar1
             // 
             this.progressBar1.Location = new System.Drawing.Point(13, 503);
             this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(594, 23);
+            this.progressBar1.Size = new System.Drawing.Size(681, 23);
             this.progressBar1.TabIndex = 0;
             // 
             // labelProgress
             // 
-            this.labelProgress.Location = new System.Drawing.Point(613, 503);
+            this.labelProgress.Location = new System.Drawing.Point(700, 503);
             this.labelProgress.Name = "labelProgress";
             this.labelProgress.Size = new System.Drawing.Size(164, 23);
             this.labelProgress.TabIndex = 6;
@@ -186,37 +188,40 @@ namespace Wordwatch.Data.Ingestor
             // buttonStop
             // 
             this.buttonStop.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.buttonStop.Location = new System.Drawing.Point(677, 378);
+            this.buttonStop.Location = new System.Drawing.Point(761, 378);
             this.buttonStop.Name = "buttonStop";
             this.buttonStop.Size = new System.Drawing.Size(103, 47);
             this.buttonStop.TabIndex = 5;
             this.buttonStop.Text = "Stop";
             this.buttonStop.UseVisualStyleBackColor = true;
+            this.buttonStop.Click += new System.EventHandler(this.buttonStop_Click);
             // 
             // buttonResume
             // 
             this.buttonResume.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.buttonResume.Location = new System.Drawing.Point(677, 321);
+            this.buttonResume.Location = new System.Drawing.Point(761, 321);
             this.buttonResume.Name = "buttonResume";
             this.buttonResume.Size = new System.Drawing.Size(103, 45);
             this.buttonResume.TabIndex = 4;
             this.buttonResume.Text = "Resume";
             this.buttonResume.UseVisualStyleBackColor = true;
+            this.buttonResume.Click += new System.EventHandler(this.buttonResume_Click);
             // 
             // buttonPause
             // 
             this.buttonPause.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.buttonPause.Location = new System.Drawing.Point(677, 263);
+            this.buttonPause.Location = new System.Drawing.Point(761, 263);
             this.buttonPause.Name = "buttonPause";
             this.buttonPause.Size = new System.Drawing.Size(103, 46);
             this.buttonPause.TabIndex = 3;
             this.buttonPause.Text = "Pause";
             this.buttonPause.UseVisualStyleBackColor = true;
+            this.buttonPause.Click += new System.EventHandler(this.buttonPause_Click);
             // 
             // buttonStart
             // 
             this.buttonStart.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.buttonStart.Location = new System.Drawing.Point(677, 208);
+            this.buttonStart.Location = new System.Drawing.Point(761, 208);
             this.buttonStart.Name = "buttonStart";
             this.buttonStart.Size = new System.Drawing.Size(103, 44);
             this.buttonStart.TabIndex = 2;
@@ -229,7 +234,7 @@ namespace Wordwatch.Data.Ingestor
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.ForestGreen;
-            this.ClientSize = new System.Drawing.Size(800, 550);
+            this.ClientSize = new System.Drawing.Size(884, 551);
             this.Controls.Add(this.panel1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Name = "MainForm";

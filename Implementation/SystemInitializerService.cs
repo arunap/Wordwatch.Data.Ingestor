@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Wordwatch.Data.Ingestor.Application.Constants;
@@ -20,10 +21,11 @@ namespace Wordwatch.Data.Ingestor.Implementation
         private readonly ApplicationSettings _applicationSettings;
         private MigrationTableInfo _sourceTableInfo;
         private MigrationTableInfo _targetTableInfo;
+        private MigrationSummary _migrationSummary = new MigrationSummary();
 
         public SystemInitializerService(
             ILogger<SystemInitializerService> logger, IOptions<ApplicationSettings> applicationSettings,
-            SourceDbContext sourceDbContext, TargetDbContext targetDbContext )
+            SourceDbContext sourceDbContext, TargetDbContext targetDbContext)
         {
             _sourceDbContext = sourceDbContext;
             _applicationSettings = applicationSettings.Value;
@@ -31,6 +33,8 @@ namespace Wordwatch.Data.Ingestor.Implementation
 
             _sourceTableInfo = new MigrationTableInfo();
             _targetTableInfo = new MigrationTableInfo();
+            _migrationSummary = new MigrationSummary();
+
             _logger = logger;
         }
 
@@ -95,20 +99,27 @@ namespace Wordwatch.Data.Ingestor.Implementation
             return _sourceTableInfo;
         }
 
-        public async Task<List<SyncedTableInfo>> InitTableAsync(IProgress<ProgressNotifier> notifyProgress)
+        public async Task<MigrationSummary> InitTableAsync(IProgress<ProgressNotifier> notifyProgress)
         {
             // init source & target table info
             if (_sourceTableInfo.TotalCalls == 0)
             {
                 _sourceTableInfo = await GetSourceDataSummaryAsync(notifyProgress);
                 _targetTableInfo = await GetTargetDataSummaryAsync(notifyProgress);
+
+                _migrationSummary.SourceTableInfo = _sourceTableInfo;
+                _migrationSummary.TargetTableInfo = _targetTableInfo;
             }
 
             // init sync info table
             List<SyncedTableInfo> _syncedTableInfo = await InitSyncedInfoTableAsync(notifyProgress);
-            notifyProgress.Report(new ProgressNotifier { Message= $"{MigrationMessageActions.Completed} Loading Table summeries."});
+            _migrationSummary.SyncedTableInfo = _syncedTableInfo;
 
-            return _syncedTableInfo;
+            notifyProgress.Report(new ProgressNotifier { Field = UIFields.CallLastSyncedAt, FieldValue = _syncedTableInfo.Where(x => x.RelatedTable == SyncTableNames.CallsTable).Select(x => x.LastSyncedAt).First() });
+
+            notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Completed} Loading Table summeries." });
+
+            return _migrationSummary;
         }
     }
 }
