@@ -29,9 +29,9 @@ namespace Wordwatch.Data.Ingestor
         private void InitializeComponent()
         {
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.groupBoxTarget = new System.Windows.Forms.GroupBox();
             this.labelTarget = new System.Windows.Forms.Label();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.groupBoxSource = new System.Windows.Forms.GroupBox();
             this.labelSource = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.listView1 = new System.Windows.Forms.ListView();
@@ -45,8 +45,8 @@ namespace Wordwatch.Data.Ingestor
             this.buttonPause = new System.Windows.Forms.Button();
             this.buttonStart = new System.Windows.Forms.Button();
             this.tableLayoutPanel1.SuspendLayout();
-            this.groupBox2.SuspendLayout();
-            this.groupBox1.SuspendLayout();
+            this.groupBoxTarget.SuspendLayout();
+            this.groupBoxSource.SuspendLayout();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -57,8 +57,8 @@ namespace Wordwatch.Data.Ingestor
             this.tableLayoutPanel1.ColumnCount = 2;
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel1.Controls.Add(this.groupBox2, 1, 0);
-            this.tableLayoutPanel1.Controls.Add(this.groupBox1, 0, 0);
+            this.tableLayoutPanel1.Controls.Add(this.groupBoxTarget, 1, 0);
+            this.tableLayoutPanel1.Controls.Add(this.groupBoxSource, 0, 0);
             this.tableLayoutPanel1.Location = new System.Drawing.Point(10, 10);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 1;
@@ -66,18 +66,18 @@ namespace Wordwatch.Data.Ingestor
             this.tableLayoutPanel1.Size = new System.Drawing.Size(854, 182);
             this.tableLayoutPanel1.TabIndex = 0;
             // 
-            // groupBox2
+            // groupBoxTarget
             // 
-            this.groupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            this.groupBoxTarget.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox2.Controls.Add(this.labelTarget);
-            this.groupBox2.Location = new System.Drawing.Point(430, 3);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(421, 176);
-            this.groupBox2.TabIndex = 1;
-            this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Target";
+            this.groupBoxTarget.Controls.Add(this.labelTarget);
+            this.groupBoxTarget.Location = new System.Drawing.Point(430, 3);
+            this.groupBoxTarget.Name = "groupBoxTarget";
+            this.groupBoxTarget.Size = new System.Drawing.Size(421, 176);
+            this.groupBoxTarget.TabIndex = 1;
+            this.groupBoxTarget.TabStop = false;
+            this.groupBoxTarget.Text = "Target";
             // 
             // labelTarget
             // 
@@ -87,21 +87,20 @@ namespace Wordwatch.Data.Ingestor
             this.labelTarget.Name = "labelTarget";
             this.labelTarget.Size = new System.Drawing.Size(415, 154);
             this.labelTarget.TabIndex = 1;
-            this.labelTarget.Text = "Target Connection String";
             this.labelTarget.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // groupBox1
+            // groupBoxSource
             // 
-            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            this.groupBoxSource.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox1.Controls.Add(this.labelSource);
-            this.groupBox1.Location = new System.Drawing.Point(3, 3);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(421, 176);
-            this.groupBox1.TabIndex = 0;
-            this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Source";
+            this.groupBoxSource.Controls.Add(this.labelSource);
+            this.groupBoxSource.Location = new System.Drawing.Point(3, 3);
+            this.groupBoxSource.Name = "groupBoxSource";
+            this.groupBoxSource.Size = new System.Drawing.Size(421, 176);
+            this.groupBoxSource.TabIndex = 0;
+            this.groupBoxSource.TabStop = false;
+            this.groupBoxSource.Text = "Source";
             // 
             // labelSource
             // 
@@ -111,7 +110,6 @@ namespace Wordwatch.Data.Ingestor
             this.labelSource.Name = "labelSource";
             this.labelSource.Size = new System.Drawing.Size(415, 154);
             this.labelSource.TabIndex = 0;
-            this.labelSource.Text = "Source Connection String";
             this.labelSource.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // panel1
@@ -236,14 +234,14 @@ namespace Wordwatch.Data.Ingestor
             this.BackColor = System.Drawing.Color.ForestGreen;
             this.ClientSize = new System.Drawing.Size(884, 551);
             this.Controls.Add(this.panel1);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "MainForm";
             this.Padding = new System.Windows.Forms.Padding(5);
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.tableLayoutPanel1.ResumeLayout(false);
-            this.groupBox2.ResumeLayout(false);
-            this.groupBox1.ResumeLayout(false);
+            this.groupBoxTarget.ResumeLayout(false);
+            this.groupBoxSource.ResumeLayout(false);
             this.panel1.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -252,8 +250,8 @@ namespace Wordwatch.Data.Ingestor
         #endregion
 
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
-        private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.GroupBox groupBoxTarget;
+        private System.Windows.Forms.GroupBox groupBoxSource;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.Label labelProgress;

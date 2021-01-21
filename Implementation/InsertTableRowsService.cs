@@ -44,27 +44,48 @@ namespace Wordwatch.Data.Ingestor.Implementation
                 notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Reading} - source calls {min} - {max}" });
                 List<Call> calls = await _sourceDbContext.Calls.Where(x => x.start_datetime >= min && x.start_datetime <= max).AsNoTracking().ToListAsync();
 
-                notifyProgress.Report(new ProgressNotifier { Message = $"{ MigrationMessageActions.Migrating } - calls to target.", Field = UIFields.TargetIngestedCallCount, FieldValue = calls.Count() });
-                await _targetDbContext.BatchInsertAsync(calls, default);
-                notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Migrated} - {calls.Count()} call rows." });
+                if (calls.Count > 0)
+                {
+                    notifyProgress.Report(new ProgressNotifier { Message = $"{ MigrationMessageActions.Migrating } - calls to target.", Field = UIFields.TargetIngestedCallCount, FieldValue = calls.Count() });
+                    await _targetDbContext.BatchInsertAsync(calls, default);
+                    notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Migrated} - {calls.Count()} call rows." });
+                }
+                else
+                {
+                    notifyProgress.Report(new ProgressNotifier { Message = $"No Calls to Insert." });
+                }
             }
             else if (tableName == SyncTableNames.MediaStubsTable)
             {
                 notifyProgress.Report(new ProgressNotifier { Message = $"{ MigrationMessageActions.Reading } - source media_stubs  { min} - {max}" });
                 List<MediaStub> mediaStubs = await _sourceDbContext.MediaStubs.Where(x => x.created >= min && x.created <= max).AsNoTracking().ToListAsync();
 
-                notifyProgress.Report(new ProgressNotifier { Message = $"{ MigrationMessageActions.Migrating } - media stubs to target.", Field = UIFields.TargetIngestedMediaStubCount, FieldValue = mediaStubs.Count() });
-                await _targetDbContext.BatchInsertAsync(mediaStubs, default);
-                notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Migrated} - {mediaStubs.Count()} media rows." });
+                if (mediaStubs.Count > 0)
+                {
+                    notifyProgress.Report(new ProgressNotifier { Message = $"{ MigrationMessageActions.Migrating } - media stubs to target.", Field = UIFields.TargetIngestedMediaStubCount, FieldValue = mediaStubs.Count() });
+                    await _targetDbContext.BatchInsertAsync(mediaStubs, default);
+                    notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Migrated} - {mediaStubs.Count()} media rows." });
+                }
+                else
+                {
+                    notifyProgress.Report(new ProgressNotifier { Message = $"No Media Stubs to Insert." });
+                }
             }
             else if (tableName == SyncTableNames.VoxStubsTable)
             {
                 notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Reading} - source vox_stubs {min} - {max}" });
-                List<VoxStub> voxStubs = await _sourceDbContext.VoxStubs.Where(x => x.created >= min && x.created <= max).AsNoTracking().ToListAsync();
+                List<VoxStub> voxStubs = await _sourceDbContext.VoxStubs.Where(x => x.start_datetime >= min && x.start_datetime <= max).AsNoTracking().ToListAsync();
 
-                notifyProgress.Report(new ProgressNotifier { Message = $"{ MigrationMessageActions.Migrating } - vox stubs to target.", Field = UIFields.TargetIngestedVoxStubCount, FieldValue = voxStubs.Count() });
-                await _targetDbContext.BatchInsertAsync(voxStubs, default);
-                notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Migrated} - {voxStubs.Count()} vox rows." });
+                if (voxStubs.Count > 0)
+                {
+                    notifyProgress.Report(new ProgressNotifier { Message = $"{ MigrationMessageActions.Migrating } - vox stubs to target.", Field = UIFields.TargetIngestedVoxStubCount, FieldValue = voxStubs.Count() });
+                    await _targetDbContext.BatchInsertAsync(voxStubs, default);
+                    notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Migrated} - {voxStubs.Count()} vox rows." });
+                }
+                else
+                {
+                    notifyProgress.Report(new ProgressNotifier { Message = $"No Vox Stubs to Insert." });
+                }
             }
 
             ResetLastSyncAt(tableName, min, notifyProgress);
@@ -88,7 +109,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
                 }
                 if (tableName == SyncTableNames.VoxStubsTable)
                 {
-                    lastSyncedAt = await _sourceDbContext.VoxStubs.MinAsync(x => x.created);
+                    lastSyncedAt = await _sourceDbContext.VoxStubs.MinAsync(x => x.start_datetime);
                 }
 
                 lastSyncedAt = new DateTimeOffset(lastSyncedAt.Value.Date, DateTimeOffset.UtcNow.Offset);
@@ -125,7 +146,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
             await _sourceDbContext.ExecuteRawSql(sql);
         }
 
-        public async Task InitAsync(string table, IProgress<ProgressNotifier> notifyProgress)
+        public async Task InsertRowsAsync(string table, IProgress<ProgressNotifier> notifyProgress)
         {
             await IngestTableRowsAsync(table, notifyProgress);
         }

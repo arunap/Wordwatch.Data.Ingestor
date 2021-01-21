@@ -9,7 +9,7 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
     public sealed class SourceDbContext : ApplicationDbContext
     {
         private readonly ApplicationSettings _applicationSettings;
-        public SourceDbContext(IOptions<ApplicationSettings> applicationSettings)
+        public SourceDbContext(IOptions<ApplicationSettings> applicationSettings) : base(applicationSettings)
         {
             _applicationSettings = applicationSettings.Value;
         }

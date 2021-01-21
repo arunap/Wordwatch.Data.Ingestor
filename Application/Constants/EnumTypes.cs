@@ -5,7 +5,9 @@
         Pending = 0,
         Started = 1,
         Stopped = 2,
-        Completed = 3
+        Completed = 3,
+        Paused = 4,
+        Resumed = 5
     }
 
     public enum MigrationMessageActions
@@ -37,4 +39,8 @@
         CallsMinDate = 10,
         CallsMaxDate = 11,
     }
+
+    public enum DbContextType { Source, Target }
+
+    public enum IndexManageStatus { Enable, Disable }
 }

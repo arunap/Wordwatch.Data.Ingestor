@@ -1,25 +1,24 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Wordwatch.Data.Ingestor.Application.Constants;
 using Wordwatch.Data.Ingestor.Application.Helpers;
 using Wordwatch.Data.Ingestor.Application.Interfaces;
 using Wordwatch.Data.Ingestor.Application.Models;
+using Wordwatch.Data.Ingestor.Infrastructure;
 
 namespace Wordwatch.Data.Ingestor
 {
     public partial class MainForm : Form
     {
-        private Dictionary<UIFields, string> _keyValuePair;
         private readonly ILogger<MainForm> _logger;
         private readonly IMigrationActionService _migrationActionService;
         private readonly ProgressObserverHelper _observerHelper = new ProgressObserverHelper();
         private IProgress<ProgressNotifier> _progressCallBack;
-
-        public MainForm(ILogger<MainForm> logger, IMigrationActionService migrationActionService)
+        private readonly ApplicationSettings _applicationSettings;
+        public MainForm(ILogger<MainForm> logger, IMigrationActionService migrationActionService, IOptions<ApplicationSettings> applicationSettings)
         {
             InitializeComponent();
 
@@ -28,9 +27,9 @@ namespace Wordwatch.Data.Ingestor
             _logger.LogInformation("InitializeComponent()!");
 
             _progressCallBack = new Progress<ProgressNotifier>(p => UpdateUI(p));
+            _applicationSettings = applicationSettings.Value;
         }
 
-       
         public void UpdateUI(ProgressNotifier values)
         {
             ProgressResults notifier = _observerHelper.WatchProgress(values);
@@ -65,15 +64,20 @@ namespace Wordwatch.Data.Ingestor
         {
             _logger.LogInformation("MainForm_Load()!");
 
-            buttonStart.Enabled = true;
+            buttonStart.Enabled = false;
             buttonPause.Enabled = false;
             buttonResume.Enabled = false;
             buttonStop.Enabled = false;
 
+            groupBoxSource.Text = $"Source -> {_applicationSettings.ConnectionStrings.Source.GetConnectionDetails()}";
+            groupBoxTarget.Text = $"Target -> {_applicationSettings.ConnectionStrings.Target.GetConnectionDetails()}";
+
             await Task.Run(async () =>
             {
-                await _migrationActionService.InitAsync(progress: _progressCallBack, cancellationToken: default);
+                //await _migrationActionService.InitAsync(progress: _progressCallBack, cancellationToken: default);
             });
+           
+            SetEnabledValue();
         }
 
         private void SetEnabledValue(bool startClicked = false, bool pausedClicked = false, bool resumeClicked = false, bool stopClicked = false, bool exitClicked = false)
@@ -113,6 +117,13 @@ namespace Wordwatch.Data.Ingestor
                 buttonResume.Enabled = false;
                 buttonStop.Enabled = false;
             }
+            else
+            {
+                buttonStart.Enabled = true;
+                buttonPause.Enabled = false;
+                buttonResume.Enabled = false;
+                buttonStop.Enabled = false;
+            }
         }
 
         private async void buttonStart_Click(object sender, EventArgs e)
@@ -137,6 +148,8 @@ namespace Wordwatch.Data.Ingestor
                 {
                     await _migrationActionService.StopAync(progress: _progressCallBack, cancellationToken: default);
                 });
+
+                this.Close();
             }
         }
 
@@ -175,6 +188,7 @@ namespace Wordwatch.Data.Ingestor
                     await _migrationActionService.StopAync(progress: _progressCallBack, cancellationToken: default);
                 });
             }
+            SetEnabledValue(false, false, false, false, true);
         }
     }
 }

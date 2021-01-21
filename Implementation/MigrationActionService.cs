@@ -14,15 +14,20 @@ using Wordwatch.Data.Ingestor.Infrastructure;
 
 namespace Wordwatch.Data.Ingestor.Implementation
 {
+    public class DataIngestStatusEvent : EventArgs
+    {
+        public IProgress<ProgressNotifier> Progress { get; set; }
+    }
+
     public class MigrationActionService : IMigrationActionService
     {
-        private readonly ILogger<MigrationActionService> _logger;
         private readonly SourceDbContext _sourceDbContext;
         private readonly TargetDbContext _targetDbContext;
+        private readonly ILogger<MigrationActionService> _logger;
         private readonly ApplicationSettings _applicationSettings;
         private readonly SystemInitializerService _systemInitializer;
         private readonly InsertTableRowsService _insertTableRowsService;
-        private bool _pausedClicked = false;
+        private DataIngestStatus _dataIngestStatus = DataIngestStatus.Pending;
 
         public MigrationActionService(
             ILogger<MigrationActionService> logger,
@@ -40,16 +45,24 @@ namespace Wordwatch.Data.Ingestor.Implementation
 
         public async Task InitAsync(IProgress<ProgressNotifier> _migrationProgress, CancellationToken cancellationToken)
         {
+            _dataIngestStatus = DataIngestStatus.Pending;
+
             await _systemInitializer.InitTableAsync(_migrationProgress);
+
+            await _targetDbContext.DisableNonClusteredIndexAsync(_migrationProgress);
+            await _targetDbContext.DisableConstraints(_migrationProgress);
+
+            await _sourceDbContext.BuildIndexesAsync(_migrationProgress);
+
+            _migrationProgress.Report(new ProgressNotifier { Message = "Source & Target Databases are READY for Migrations." });
         }
 
         public async Task Pause(IProgress<ProgressNotifier> notifyProgress, CancellationToken cancellationToken)
         {
-            _pausedClicked = true;
-
             notifyProgress.Report(new ProgressNotifier { Message = $"User Clicked Pause Action." });
-
             notifyProgress.Report(new ProgressNotifier { Message = $"Please wait until the system finalizing Pause Operations." });
+
+            _dataIngestStatus = DataIngestStatus.Paused;
 
             await Task.CompletedTask;
         }
@@ -57,39 +70,49 @@ namespace Wordwatch.Data.Ingestor.Implementation
         public async Task ResumeAync(IProgress<ProgressNotifier> notifyProgress, CancellationToken cancellationToken)
         {
             notifyProgress.Report(new ProgressNotifier { Message = $"User Clicked Resume Action." });
-           
+
+            _dataIngestStatus = DataIngestStatus.Resumed;
+
             await StartAync(notifyProgress, cancellationToken);
         }
 
         public async Task StartAync(IProgress<ProgressNotifier> notifyProgress, CancellationToken cancellationToken)
         {
+            _dataIngestStatus = DataIngestStatus.Started;
+
             int loopCount = await GetPendingIterationCountAsync();
 
             int idx = 0;
 
-            while (idx <= loopCount && !_pausedClicked)
+            while (idx <= loopCount && _dataIngestStatus != DataIngestStatus.Paused && _dataIngestStatus != DataIngestStatus.Stopped)
             {
-                await _insertTableRowsService.InitAsync(SyncTableNames.CallsTable, notifyProgress);
-              //  await _insertTableRowsService.InitAsync(SyncTableNames.MediaStubsTable, notifyProgress);
-              //  await _insertTableRowsService.InitAsync(SyncTableNames.VoxStubsTable, notifyProgress);
+                await _insertTableRowsService.InsertRowsAsync(SyncTableNames.CallsTable, notifyProgress);
+               // await _insertTableRowsService.InsertRowsAsync(SyncTableNames.MediaStubsTable, notifyProgress);
+                await _insertTableRowsService.InsertRowsAsync(SyncTableNames.VoxStubsTable, notifyProgress);
 
                 idx++;
             }
 
-            if (_pausedClicked)
+            if (idx >= loopCount)
             {
-                notifyProgress.Report(new ProgressNotifier { Message = $"Migrations are successfully paused!." });
+                _dataIngestStatus = DataIngestStatus.Completed;
+            }
+
+            if (_dataIngestStatus == DataIngestStatus.Completed || _dataIngestStatus == DataIngestStatus.Stopped)
+            {
+                await _targetDbContext.EnableConstraints(notifyProgress);
+                await _targetDbContext.EnableNonClusteredIndexAsync(notifyProgress);
+
+                notifyProgress.Report(new ProgressNotifier { Message = $"Data Migrations successfully {_dataIngestStatus}!." });
             }
         }
 
         public async Task StopAync(IProgress<ProgressNotifier> notifyProgress, CancellationToken cancellationToken)
         {
             notifyProgress.Report(new ProgressNotifier { Message = $"User Clicked Stop Action." });
-
-            _pausedClicked = true;
             notifyProgress.Report(new ProgressNotifier { Message = $"Please wait until the system finalizing Stop Operations." });
 
-            // Enable indexes.
+            _dataIngestStatus = DataIngestStatus.Stopped;
 
             await Task.CompletedTask;
         }

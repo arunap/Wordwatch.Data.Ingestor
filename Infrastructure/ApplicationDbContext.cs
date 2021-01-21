@@ -1,19 +1,26 @@
 ﻿using EFCore.BulkExtensions;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Wordwatch.Data.Ingestor.Application.Constants;
+using Wordwatch.Data.Ingestor.Application.Models;
 using Wordwatch.Data.Ingestor.Domain.Entities;
 
 namespace Wordwatch.Data.Ingestor.Infrastructure
 {
     public abstract class ApplicationDbContext : DbContext
     {
+        private readonly ApplicationSettings _applicationSettings;
+        protected ApplicationDbContext(IOptions<ApplicationSettings> applicationSettings)
+        {
+            _applicationSettings = applicationSettings.Value;
+        }
+
         public DbSet<Call> Calls { get; set; }
         public DbSet<MediaStub> MediaStubs { get; set; }
         public DbSet<VoxStub> VoxStubs { get; set; }
@@ -25,7 +32,7 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
 
         public async Task BatchInsertAsync<T>(List<T> entityList, CancellationToken cancellationToken) where T : class
         {
-            await this.BulkInsertAsync<T>(entityList, cancellationToken: cancellationToken);
+            await this.BulkInsertAsync<T>(entityList, bulkConfig: new BulkConfig { BatchSize = _applicationSettings.IngestBatchSize }, cancellationToken: cancellationToken);
         }
 
         public async Task<IEnumerable<TEntity>> BatchReadAsync<TEntity>(
@@ -110,6 +117,8 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
             int rowcount = 0;
             using (var command = conn.CreateCommand())
             {
+                command.CommandTimeout = _applicationSettings.CommandTimeout;
+
                 var entityType = this.Model.FindEntityType(typeof(T));
                 var schema = entityType.GetSchema();
                 var tableName = entityType.GetTableName();
