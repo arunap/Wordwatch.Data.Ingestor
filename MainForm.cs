@@ -76,10 +76,10 @@ namespace Wordwatch.Data.Ingestor
                 await _migrationActionService.InitAsync(progress: _progressCallBack, cancellationToken: default);
             });
            
-            SetEnabledValue();
+            SetActionButtonState();
         }
 
-        private void SetEnabledValue(bool startClicked = false, bool pausedClicked = false, bool resumeClicked = false, bool stopClicked = false, bool exitClicked = false)
+        private void SetActionButtonState(bool startClicked = false, bool pausedClicked = false, bool resumeClicked = false, bool stopClicked = false, bool exitClicked = false)
         {
             if (startClicked)
             {
@@ -130,7 +130,7 @@ namespace Wordwatch.Data.Ingestor
             var confirmed = MessageBox.Show("Are you sure you want to Start Migration?", "Start Action!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (confirmed == DialogResult.Yes)
             {
-                SetEnabledValue(true, false, false, false, false);
+                SetActionButtonState(true, false, false, false, false);
                 await Task.Run(async () =>
                 {
                     await _migrationActionService.StartAync(progress: _progressCallBack, cancellationToken: default);
@@ -143,7 +143,7 @@ namespace Wordwatch.Data.Ingestor
             var confirmed = MessageBox.Show("Are you sure you want to Exit Application?", "Exit Action!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (confirmed == DialogResult.Yes)
             {
-                SetEnabledValue(exitClicked:true);
+                SetActionButtonState(exitClicked:true);
                 await Task.Run(async () =>
                 {
                     await _migrationActionService.StopAync(progress: _progressCallBack, cancellationToken: default);
@@ -158,7 +158,7 @@ namespace Wordwatch.Data.Ingestor
             var confirmed = MessageBox.Show("Are you sure you want to Pause Migration?", "Pause Action!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (confirmed == DialogResult.Yes)
             {
-                SetEnabledValue(pausedClicked: true);
+                SetActionButtonState(pausedClicked: true);
                 await Task.Run(async () =>
                 {
                     await _migrationActionService.Pause(progress: _progressCallBack, cancellationToken: default);
@@ -171,6 +171,7 @@ namespace Wordwatch.Data.Ingestor
             var confirmed = MessageBox.Show("Are you sure you want to Resume Migration?", "Resume Action!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (confirmed == DialogResult.Yes)
             {
+                SetActionButtonState(resumeClicked:true);
                 await Task.Run(async () =>
                 {
                     await _migrationActionService.ResumeAync(progress: _progressCallBack, cancellationToken: default);
@@ -188,7 +189,7 @@ namespace Wordwatch.Data.Ingestor
                     await _migrationActionService.StopAync(progress: _progressCallBack, cancellationToken: default);
                 });
             }
-            SetEnabledValue(stopClicked: true);
+            SetActionButtonState(stopClicked: true);
         }
     }
 }

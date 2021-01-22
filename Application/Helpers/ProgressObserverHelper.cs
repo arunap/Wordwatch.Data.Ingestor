@@ -84,7 +84,7 @@ namespace Wordwatch.Data.Ingestor.Application.Helpers
             sourceText.Append($"Calls: {sourceCallCount:N0} {Environment.NewLine}");
             sourceText.Append($"MediaStubs: {sourceMediaCount:N0} {Environment.NewLine}");
             sourceText.Append($"VoxStubs: {sourceVoxCount:N0} {Environment.NewLine}");
-            sourceText.Append($"Dates: {_keyValuePair[UIFields.CallsMinDate]} - {_keyValuePair[UIFields.CallsMaxDate]} ({_keyValuePair[UIFields.SourceCallDistribution]})");
+            sourceText.Append($"Date Range: {_keyValuePair[UIFields.CallsMinDate]} - {_keyValuePair[UIFields.CallsMaxDate]} ({_keyValuePair[UIFields.SourceCallDistribution]})");
 
             int.TryParse(_keyValuePair[UIFields.TargetIngestedCallCount], out int ingetedCalls);
             int.TryParse(_keyValuePair[UIFields.TargetIngestedMediaStubCount], out int ingestedMedia);
@@ -95,14 +95,14 @@ namespace Wordwatch.Data.Ingestor.Application.Helpers
             DateTimeOffset.TryParse(_keyValuePair[UIFields.CallsMaxDate], out DateTimeOffset maxDate);
 
             StringBuilder targetText = new StringBuilder();
-            targetText.Append($"Calls: {ingetedCalls:N0}, Synced On: {_keyValuePair[UIFields.CallLastSyncedAt]}{Environment.NewLine}");
-            targetText.Append($"MediaStubs: {ingestedMedia:N0} Synced On: {_keyValuePair[UIFields.MediaStubsLastSyncedAt]}{Environment.NewLine}");
-            targetText.Append($"VoxStubs: {ingestedVox:N0} Synced On: {_keyValuePair[UIFields.VoxStubsLastSyncedAt]}{Environment.NewLine}");
+            targetText.Append($"Calls: {ingetedCalls:N0}, Last Synced: {_keyValuePair[UIFields.CallLastSyncedAt]}{Environment.NewLine}");
+            targetText.Append($"MediaStubs: {ingestedMedia:N0} Last Synced: {_keyValuePair[UIFields.MediaStubsLastSyncedAt]}{Environment.NewLine}");
+            targetText.Append($"VoxStubs: {ingestedVox:N0} Last Synced: {_keyValuePair[UIFields.VoxStubsLastSyncedAt]}{Environment.NewLine}");
 
             if (synced == DateTimeOffset.MinValue)
-                targetText.Append($"Days Pending: {_keyValuePair[UIFields.SourceCallDistribution]} ({sourceCallCount - ingetedCalls:N0})");
+                targetText.Append($"Calls Remaining: {sourceCallCount - ingetedCalls:N0}");
             else
-                targetText.Append($"Days Pending: { Math.Round((maxDate - synced).TotalDays)} ({sourceCallCount - ingetedCalls:N0}) ");
+                targetText.Append($"Calls Remaining: {sourceCallCount - ingetedCalls:N0} ");
 
             var pValue = Math.Round((int.Parse(_keyValuePair[UIFields.TargetIngestedCallCount].ToString()) / double.Parse(sourceCallCount.ToString())) * 100);
 

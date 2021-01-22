@@ -116,6 +116,8 @@ namespace Wordwatch.Data.Ingestor.Implementation
             _migrationSummary.SyncedTableInfo = _syncedTableInfo;
 
             notifyProgress.Report(new ProgressNotifier { Field = UIFields.CallLastSyncedAt, FieldValue = _syncedTableInfo.Where(x => x.RelatedTable == SyncTableNames.CallsTable).Select(x => x.LastSyncedAt).First() });
+            notifyProgress.Report(new ProgressNotifier { Field = UIFields.VoxStubsLastSyncedAt, FieldValue = _syncedTableInfo.Where(x => x.RelatedTable == SyncTableNames.VoxStubsTable).Select(x => x.LastSyncedAt).First() });
+            notifyProgress.Report(new ProgressNotifier { Field = UIFields.MediaStubsLastSyncedAt, FieldValue = _syncedTableInfo.Where(x => x.RelatedTable == SyncTableNames.MediaStubsTable).Select(x => x.LastSyncedAt).First() });
 
             notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Completed} Loading Table summeries." });
 

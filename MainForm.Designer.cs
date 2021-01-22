@@ -171,7 +171,7 @@ namespace Wordwatch.Data.Ingestor
             // 
             // progressBar1
             // 
-            this.progressBar1.Location = new System.Drawing.Point(13, 503);
+            this.progressBar1.Location = new System.Drawing.Point(11, 503);
             this.progressBar1.Name = "progressBar1";
             this.progressBar1.Size = new System.Drawing.Size(681, 23);
             this.progressBar1.TabIndex = 0;
@@ -182,7 +182,7 @@ namespace Wordwatch.Data.Ingestor
             this.labelProgress.Name = "labelProgress";
             this.labelProgress.Size = new System.Drawing.Size(164, 23);
             this.labelProgress.TabIndex = 6;
-            this.labelProgress.Text = "label1";
+            this.labelProgress.Text = "0%";
             this.labelProgress.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // buttonStop

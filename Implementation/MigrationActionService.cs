@@ -104,7 +104,11 @@ namespace Wordwatch.Data.Ingestor.Implementation
                 await _targetDbContext.EnableNonClusteredIndexAsync(notifyProgress);
 
                 _dataIngestStatus = DataIngestStatus.Finished;
-                //notifyProgress.Report(new ProgressNotifier { Message = $"Data Migrations successfully {_dataIngestStatus}!." });
+            }
+
+            if (_dataIngestStatus == DataIngestStatus.Paused)
+            {
+                notifyProgress.Report(new ProgressNotifier { Message = $"Data Migrations successfully {DataIngestStatus.Paused}!." });
             }
         }
 
@@ -114,15 +118,18 @@ namespace Wordwatch.Data.Ingestor.Implementation
             notifyProgress.Report(new ProgressNotifier { Message = $"Please wait until the system finalizing Stop Operations." });
 
             if (_dataIngestStatus != DataIngestStatus.Finished)
+            {
                 _dataIngestStatus = DataIngestStatus.Stopped;
 
-            while (_dataIngestStatus != DataIngestStatus.Finished)
-            {
-                Thread.Sleep(TimeSpan.FromSeconds(3));
-                notifyProgress.Report(new ProgressNotifier { Message = $"Waiting on Stop Operations..." });
+                while (_dataIngestStatus != DataIngestStatus.Finished)
+                {
+                    Thread.Sleep(TimeSpan.FromSeconds(3));
+                    notifyProgress.Report(new ProgressNotifier { Message = $"Waiting on Stop Operations..." });
+                }
+
+                notifyProgress.Report(new ProgressNotifier { Message = $"Data Migrations successfully {_dataIngestStatus}!." });
             }
 
-            notifyProgress.Report(new ProgressNotifier { Message = $"Data Migrations successfully {_dataIngestStatus}!." });
             await Task.CompletedTask;
         }
 
