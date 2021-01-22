@@ -64,7 +64,7 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
         public static string GetConnectionDetails(this string connectionString)
         {
             using SqlConnection con = new SqlConnection(connectionString);
-            return $"Server: {con.DataSource}, Database: {con.Database}";
+            return $"Svr: {con.DataSource}, Db: {con.Database}";
         }
     }
 }

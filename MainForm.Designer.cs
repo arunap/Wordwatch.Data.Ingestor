@@ -72,6 +72,7 @@ namespace Wordwatch.Data.Ingestor
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBoxTarget.Controls.Add(this.labelTarget);
+            this.groupBoxTarget.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.groupBoxTarget.Location = new System.Drawing.Point(430, 3);
             this.groupBoxTarget.Name = "groupBoxTarget";
             this.groupBoxTarget.Size = new System.Drawing.Size(421, 176);
@@ -95,6 +96,7 @@ namespace Wordwatch.Data.Ingestor
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBoxSource.Controls.Add(this.labelSource);
+            this.groupBoxSource.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.groupBoxSource.Location = new System.Drawing.Point(3, 3);
             this.groupBoxSource.Name = "groupBoxSource";
             this.groupBoxSource.Size = new System.Drawing.Size(421, 176);

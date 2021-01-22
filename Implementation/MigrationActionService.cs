@@ -87,7 +87,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
             while (idx <= loopCount && _dataIngestStatus != DataIngestStatus.Paused && _dataIngestStatus != DataIngestStatus.Stopped)
             {
                 await _insertTableRowsService.InsertRowsAsync(SyncTableNames.CallsTable, notifyProgress);
-               // await _insertTableRowsService.InsertRowsAsync(SyncTableNames.MediaStubsTable, notifyProgress);
+                // await _insertTableRowsService.InsertRowsAsync(SyncTableNames.MediaStubsTable, notifyProgress);
                 await _insertTableRowsService.InsertRowsAsync(SyncTableNames.VoxStubsTable, notifyProgress);
 
                 idx++;
@@ -103,7 +103,8 @@ namespace Wordwatch.Data.Ingestor.Implementation
                 await _targetDbContext.EnableConstraints(notifyProgress);
                 await _targetDbContext.EnableNonClusteredIndexAsync(notifyProgress);
 
-                notifyProgress.Report(new ProgressNotifier { Message = $"Data Migrations successfully {_dataIngestStatus}!." });
+                _dataIngestStatus = DataIngestStatus.Finished;
+                //notifyProgress.Report(new ProgressNotifier { Message = $"Data Migrations successfully {_dataIngestStatus}!." });
             }
         }
 
@@ -112,8 +113,16 @@ namespace Wordwatch.Data.Ingestor.Implementation
             notifyProgress.Report(new ProgressNotifier { Message = $"User Clicked Stop Action." });
             notifyProgress.Report(new ProgressNotifier { Message = $"Please wait until the system finalizing Stop Operations." });
 
-            _dataIngestStatus = DataIngestStatus.Stopped;
+            if (_dataIngestStatus != DataIngestStatus.Finished)
+                _dataIngestStatus = DataIngestStatus.Stopped;
 
+            while (_dataIngestStatus != DataIngestStatus.Finished)
+            {
+                Thread.Sleep(TimeSpan.FromSeconds(3));
+                notifyProgress.Report(new ProgressNotifier { Message = $"Waiting on Stop Operations..." });
+            }
+
+            notifyProgress.Report(new ProgressNotifier { Message = $"Data Migrations successfully {_dataIngestStatus}!." });
             await Task.CompletedTask;
         }
 

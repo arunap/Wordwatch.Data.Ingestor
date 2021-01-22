@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using System.Runtime.CompilerServices;
 using Wordwatch.Data.Ingestor.Application.Models;
 
 namespace Wordwatch.Data.Ingestor.Infrastructure
@@ -11,6 +10,10 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
         public TargetDbContext(IOptions<ApplicationSettings> applicationSettings) : base(applicationSettings)
         {
             _applicationSettings = applicationSettings.Value;
+
+            // This is to improve quering time
+            ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+            ChangeTracker.AutoDetectChangesEnabled = false;
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

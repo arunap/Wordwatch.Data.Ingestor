@@ -12,6 +12,10 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
         public SourceDbContext(IOptions<ApplicationSettings> applicationSettings) : base(applicationSettings)
         {
             _applicationSettings = applicationSettings.Value;
+
+            // This is to improve quering time
+            ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+            ChangeTracker.AutoDetectChangesEnabled = false;
         }
 
         public DbSet<SyncedTableInfo> SyncedTableInfo { get; set; }

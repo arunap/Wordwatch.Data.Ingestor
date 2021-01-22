@@ -1,5 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Threading.Tasks;
@@ -74,7 +73,7 @@ namespace Wordwatch.Data.Ingestor
 
             await Task.Run(async () =>
             {
-                //await _migrationActionService.InitAsync(progress: _progressCallBack, cancellationToken: default);
+                await _migrationActionService.InitAsync(progress: _progressCallBack, cancellationToken: default);
             });
            
             SetEnabledValue();
@@ -144,12 +143,13 @@ namespace Wordwatch.Data.Ingestor
             var confirmed = MessageBox.Show("Are you sure you want to Exit Application?", "Exit Action!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (confirmed == DialogResult.Yes)
             {
+                SetEnabledValue(exitClicked:true);
                 await Task.Run(async () =>
                 {
                     await _migrationActionService.StopAync(progress: _progressCallBack, cancellationToken: default);
                 });
 
-                this.Close();
+               this.Close();
             }
         }
 
@@ -188,7 +188,7 @@ namespace Wordwatch.Data.Ingestor
                     await _migrationActionService.StopAync(progress: _progressCallBack, cancellationToken: default);
                 });
             }
-            SetEnabledValue(false, false, false, false, true);
+            SetEnabledValue(stopClicked: true);
         }
     }
 }

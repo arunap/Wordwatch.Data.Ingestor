@@ -146,7 +146,6 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
             modelBuilder.Entity<VoxStub>().ToTable("vox_stubs");
 
             modelBuilder.HasDefaultSchema("ww");
-
             base.OnModelCreating(modelBuilder);
         }
     }
