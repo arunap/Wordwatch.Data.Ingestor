@@ -46,6 +46,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
         public async Task InitAsync(IProgress<ProgressNotifier> _migrationProgress, CancellationToken cancellationToken)
         {
             _dataIngestStatus = DataIngestStatus.Pending;
+            _migrationProgress.Report(new ProgressNotifier { Message = $"Initialising Source & Target Database connections!!!" });
 
             await _systemInitializer.InitTableAsync(_migrationProgress);
 
@@ -87,7 +88,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
             while (idx <= loopCount && _dataIngestStatus != DataIngestStatus.Paused && _dataIngestStatus != DataIngestStatus.Stopped)
             {
                 await _insertTableRowsService.InsertRowsAsync(SyncTableNames.CallsTable, notifyProgress);
-                // await _insertTableRowsService.InsertRowsAsync(SyncTableNames.MediaStubsTable, notifyProgress);
+                await _insertTableRowsService.InsertRowsAsync(SyncTableNames.MediaStubsTable, notifyProgress);
                 await _insertTableRowsService.InsertRowsAsync(SyncTableNames.VoxStubsTable, notifyProgress);
 
                 idx++;
@@ -100,9 +101,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
 
             if (_dataIngestStatus == DataIngestStatus.Completed || _dataIngestStatus == DataIngestStatus.Stopped)
             {
-                await _targetDbContext.EnableConstraints(notifyProgress);
-                await _targetDbContext.EnableNonClusteredIndexAsync(notifyProgress);
-
+                await EnableConstraintsAndNonClusteredIndexAsync(notifyProgress);
                 _dataIngestStatus = DataIngestStatus.Finished;
             }
 
@@ -117,7 +116,17 @@ namespace Wordwatch.Data.Ingestor.Implementation
             notifyProgress.Report(new ProgressNotifier { Message = $"User Clicked Stop Action." });
             notifyProgress.Report(new ProgressNotifier { Message = $"Please wait until the system finalizing Stop Operations." });
 
-            if (_dataIngestStatus != DataIngestStatus.Finished)
+            if (_dataIngestStatus == DataIngestStatus.Pending || _dataIngestStatus == DataIngestStatus.Paused)
+            {
+                while (_dataIngestStatus != DataIngestStatus.Pending && _dataIngestStatus != DataIngestStatus.Paused)
+                {
+                    Thread.Sleep(TimeSpan.FromSeconds(3));
+                    notifyProgress.Report(new ProgressNotifier { Message = $"Waiting on Stop Operations..." });
+                }
+                await EnableConstraintsAndNonClusteredIndexAsync(notifyProgress);
+                _dataIngestStatus = DataIngestStatus.Finished;
+            }
+            else if (_dataIngestStatus != DataIngestStatus.Finished)
             {
                 _dataIngestStatus = DataIngestStatus.Stopped;
 
@@ -131,6 +140,12 @@ namespace Wordwatch.Data.Ingestor.Implementation
             }
 
             await Task.CompletedTask;
+        }
+
+        private async Task EnableConstraintsAndNonClusteredIndexAsync(IProgress<ProgressNotifier> notifyProgress)
+        {
+            await _targetDbContext.EnableConstraints(notifyProgress);
+            await _targetDbContext.EnableNonClusteredIndexAsync(notifyProgress);
         }
 
         private async Task<int> GetPendingIterationCountAsync()
