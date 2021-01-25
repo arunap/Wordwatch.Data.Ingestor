@@ -27,6 +27,53 @@ namespace Wordwatch.Data.Ingestor
 
             _progressCallBack = new Progress<ProgressNotifier>(p => UpdateUI(p));
             _applicationSettings = applicationSettings.Value;
+
+            _migrationActionService.WorkflowStateChanged += OnWorkflowStateChanged;
+        }
+
+        private void OnWorkflowStateChanged(object sender, Implementation.DataIngestStatusEvent e)
+        {
+            switch (e.DataIngestStatus)
+            {
+                case Application.Constants.DataIngestStatus.Pending:
+                    SetActionButtonState(init: true);
+                    break;
+
+                case Application.Constants.DataIngestStatus.Ready:
+                    SetActionButtonState();
+                    break;
+
+                case Application.Constants.DataIngestStatus.Started:
+                    SetActionButtonState(startClicked: true);
+                    break;
+
+                case Application.Constants.DataIngestStatus.Stopped:
+                    SetActionButtonState(stopClicked: true);
+                    break;
+
+                case Application.Constants.DataIngestStatus.Completed:
+                    break;
+
+                case Application.Constants.DataIngestStatus.Paused:
+                    SetActionButtonState(pausedClicked: true);
+                    break;
+
+                case Application.Constants.DataIngestStatus.Resumed:
+                    SetActionButtonState(resumeClicked: true);
+                    break;
+
+                case Application.Constants.DataIngestStatus.Finished:
+                    SetActionButtonState();
+
+                    var confirmed = MessageBox.Show("Are you sure you want to Exit Application?", "Exit Action!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                    if (confirmed == DialogResult.Yes)
+                        this.Close();
+
+                    break;
+
+                default:
+                    break;
+            }
         }
 
         public void UpdateUI(ProgressNotifier values)
@@ -75,7 +122,7 @@ namespace Wordwatch.Data.Ingestor
             SetActionButtonState();
         }
 
-        private void SetActionButtonState(bool startClicked = false, bool pausedClicked = false, bool resumeClicked = false, bool stopClicked = false, bool exitClicked = false)
+        private void SetActionButtonState(bool init = false, bool startClicked = false, bool pausedClicked = false, bool resumeClicked = false, bool stopClicked = false, bool exitClicked = false)
         {
             if (startClicked)
             {
@@ -112,6 +159,13 @@ namespace Wordwatch.Data.Ingestor
                 buttonResume.Enabled = false;
                 buttonStop.Enabled = false;
             }
+            else if (init)
+            {
+                buttonStart.Enabled = false;
+                buttonPause.Enabled = false;
+                buttonResume.Enabled = false;
+                buttonStop.Enabled = false;
+            }
             else
             {
                 buttonStart.Enabled = true;
@@ -121,13 +175,17 @@ namespace Wordwatch.Data.Ingestor
             }
         }
 
+        private async Task ExecuteAsyncTask(Task task)
+        {
+            await Task.Run(async () => await task);
+        }
+
         private async void buttonStart_Click(object sender, EventArgs e)
         {
             var confirmed = MessageBox.Show("Are you sure you want to Start Migration?", "Start Action!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (confirmed == DialogResult.Yes)
             {
-                SetActionButtonState(true, false, false, false, false);
-                await _migrationActionService.StartAync(progress: _progressCallBack, cancellationToken: default);
+                await ExecuteAsyncTask(_migrationActionService.StartAync(progress: _progressCallBack, cancellationToken: default));
             }
         }
 
@@ -136,9 +194,7 @@ namespace Wordwatch.Data.Ingestor
             var confirmed = MessageBox.Show("Are you sure you want to Exit Application?", "Exit Action!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (confirmed == DialogResult.Yes)
             {
-                SetActionButtonState(exitClicked: true);
-                await _migrationActionService.StopAync(progress: _progressCallBack, cancellationToken: default);
-                this.Close();
+                await ExecuteAsyncTask(_migrationActionService.StopAync(progress: _progressCallBack, cancellationToken: default));
             }
         }
 
@@ -147,11 +203,7 @@ namespace Wordwatch.Data.Ingestor
             var confirmed = MessageBox.Show("Are you sure you want to Pause Migration?", "Pause Action!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (confirmed == DialogResult.Yes)
             {
-                SetActionButtonState(pausedClicked: true);
-                await Task.Run(async () =>
-                {
-                    await _migrationActionService.Pause(progress: _progressCallBack, cancellationToken: default);
-                });
+                await ExecuteAsyncTask(_migrationActionService.Pause(progress: _progressCallBack, cancellationToken: default));
             }
         }
 
@@ -160,8 +212,7 @@ namespace Wordwatch.Data.Ingestor
             var confirmed = MessageBox.Show("Are you sure you want to Resume Migration?", "Resume Action!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (confirmed == DialogResult.Yes)
             {
-                SetActionButtonState(resumeClicked: true);
-                await _migrationActionService.ResumeAync(progress: _progressCallBack, cancellationToken: default);
+                await ExecuteAsyncTask(_migrationActionService.ResumeAync(progress: _progressCallBack, cancellationToken: default));
             }
         }
 
@@ -170,9 +221,8 @@ namespace Wordwatch.Data.Ingestor
             var confirmed = MessageBox.Show("Are you sure you want to Stop Migration?", "Stop Action!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (confirmed == DialogResult.Yes)
             {
-                await _migrationActionService.StopAync(progress: _progressCallBack, cancellationToken: default);
+                await ExecuteAsyncTask(_migrationActionService.StopAync(progress: _progressCallBack, cancellationToken: default));
             }
-            SetActionButtonState(stopClicked: true);
         }
     }
 }

@@ -8,7 +8,8 @@
         Completed = 3,
         Paused = 4,
         Resumed = 5,
-        Finished = 6
+        Finished = 6,
+        Ready = 7
     }
 
     public enum MigrationMessageActions

@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Wordwatch.Data.Ingestor.Application.Models;
+using Wordwatch.Data.Ingestor.Implementation;
 
 namespace Wordwatch.Data.Ingestor.Application.Interfaces
 {
@@ -16,5 +17,9 @@ namespace Wordwatch.Data.Ingestor.Application.Interfaces
         public Task ResumeAync(IProgress<ProgressNotifier> progress, CancellationToken cancellationToken = default);
 
         public Task StopAync(IProgress<ProgressNotifier> progress, CancellationToken cancellationToken = default);
+
+        public Task ExitAync(IProgress<ProgressNotifier> progress, CancellationToken cancellationToken = default);
+
+        public event EventHandler<DataIngestStatusEvent> WorkflowStateChanged;
     }
 }

@@ -148,5 +148,10 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
             modelBuilder.HasDefaultSchema("ww");
             base.OnModelCreating(modelBuilder);
         }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+        }
     }
 }

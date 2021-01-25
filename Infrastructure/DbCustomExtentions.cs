@@ -36,7 +36,12 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
 
         public static async Task BuildIndexesAsync(this SourceDbContext sourceDbContext, IProgress<ProgressNotifier> progress)
         {
-            string[] indexes = new string[] { "ALTER INDEX IX_calls_strt_dttm ON ww.calls REBUILD;", "ALTER INDEX idx_vox_stubs_start_datetime ON ww.vox_stubs REBUILD;" };
+            string[] indexes = new string[] {
+                "ALTER INDEX IX_calls_strt_dttm ON ww.calls REBUILD;",
+                "ALTER INDEX idx_vox_stubs_start_datetime ON ww.vox_stubs REBUILD;",
+                "ALTER INDEX [IX_media_stubs_created] ON [ww].[media_stubs] REBUILD;"
+            };
+
             foreach (var item in indexes)
             {
                 progress.Report(new ProgressNotifier { Message = $"Building SOURCE Index: {item}" });
@@ -47,7 +52,12 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
 
         public static async Task DisableConstraints(this TargetDbContext targetDbContext, IProgress<ProgressNotifier> progress)
         {
-            string sql = "ALTER TABLE [ww].[media_stubs] NOCHECK CONSTRAINT [FK_media_stubs_calls];";
+            string sql =
+                "ALTER TABLE [ww].[media_stubs] NOCHECK CONSTRAINT [FK_media_stubs_calls]; " +
+                "ALTER TABLE [ww].[calls] NOCHECK CONSTRAINT [FK_calls_originating_device_id_devices_id];" +
+                "ALTER TABLE [ww].[calls] NOCHECK CONSTRAINT [FK_calls_terminating_device_id_devices_id]; " +
+                "ALTER TABLE [ww].[calls] NOCHECK CONSTRAINT [FK_calls_user_id_users_id];";
+
             progress.Report(new ProgressNotifier { Message = $"Disabling TARGET Constraints: {sql}" });
             await targetDbContext.ExecuteRawSql(sql);
             progress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Completed} - Disabling TARGET Constraints: {sql}." });
@@ -55,7 +65,12 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
 
         public static async Task EnableConstraints(this TargetDbContext targetDbContext, IProgress<ProgressNotifier> progress)
         {
-            string sql = "ALTER TABLE [ww].[media_stubs] CHECK CONSTRAINT [FK_media_stubs_calls];";
+            string sql =
+                "ALTER TABLE [ww].[media_stubs] CHECK CONSTRAINT [FK_media_stubs_calls];" +
+                "ALTER TABLE [ww].[calls] CHECK CONSTRAINT [FK_calls_originating_device_id_devices_id];" +
+                "ALTER TABLE [ww].[calls] CHECK CONSTRAINT [FK_calls_terminating_device_id_devices_id]; " +
+                "ALTER TABLE [ww].[calls] CHECK CONSTRAINT [FK_calls_user_id_users_id];";
+
             progress.Report(new ProgressNotifier { Message = $"Enabling TARGET Constraints: {sql}" });
             await targetDbContext.ExecuteRawSql(sql);
             progress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Completed} - Enabling TARGET Constraints: {sql} ." });

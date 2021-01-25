@@ -47,7 +47,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
                 StringBuilder sb = new StringBuilder();
                 sb.Append("CREATE TABLE [dbo].[SyncedTableInfo]([Id] [int] IDENTITY(1,1) NOT NULL PRIMARY KEY,[LastSyncedAt] [datetimeoffset](7) NULL,[RelatedTable] [varchar](15) NULL) ON [PRIMARY];");
                 sb.Append("INSERT INTO [dbo].[SyncedTableInfo] ([RelatedTable] ) VALUES ('ww.calls'), ('ww.media_stubs'),('ww.vox_stubs');");
-                sb.Append("IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_calls_crtd' AND object_id = OBJECT_ID('ww.calls')) BEGIN CREATE NONCLUSTERED INDEX [IX_calls_crtd] ON [ww].[calls] ([created] ASC) ON [PRIMARY] END");
+                sb.Append("IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_media_stubs_created' AND object_id = OBJECT_ID('ww.media_stubs')) BEGIN CREATE NONCLUSTERED INDEX [IX_media_stubs_created] ON [ww].[media_stubs] ([created] ASC) ON [PRIMARY] END");
                 await _sourceDbContext.ExecuteRawSql(sb.ToString());
             }
             notifyProgress.Report(new ProgressNotifier { Message = "[dbo].[SyncedTableInfo] Initialized." });
@@ -110,6 +110,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
 
                 _migrationSummary.SourceTableInfo = _sourceTableInfo;
                 _migrationSummary.TargetTableInfo = _targetTableInfo;
+
             }
 
             // init sync info table
