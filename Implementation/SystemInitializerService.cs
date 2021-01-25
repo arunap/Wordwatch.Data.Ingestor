@@ -101,6 +101,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
 
         public async Task<MigrationSummary> InitTableAsync(IProgress<ProgressNotifier> notifyProgress)
         {
+            notifyProgress.Report(new ProgressNotifier { Message = $"Initialising Migration Actions.. Please Wait..." });
             // init source & target table info
             if (_sourceTableInfo.TotalCalls == 0)
             {
