@@ -47,7 +47,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
                 if (calls.Count > 0)
                 {
                     notifyProgress.Report(new ProgressNotifier { Message = $"{ MigrationMessageActions.Migrating } - calls to target.", Field = UIFields.TargetIngestedCallCount, FieldValue = calls.Count() });
-                    await _targetDbContext.BatchInsertAsync(calls, default);
+                    await InsertOrDeleteRowBatchesAsync(calls, notifyProgress);
                     notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Migrated} - {calls.Count():N0} call rows." });
                 }
                 else
@@ -63,7 +63,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
                 if (mediaStubs.Count > 0)
                 {
                     notifyProgress.Report(new ProgressNotifier { Message = $"{ MigrationMessageActions.Migrating } - media stubs to target.", Field = UIFields.TargetIngestedMediaStubCount, FieldValue = mediaStubs.Count() });
-                    await _targetDbContext.BatchInsertAsync(mediaStubs, default);
+                    await InsertOrDeleteRowBatchesAsync(mediaStubs, notifyProgress);
                     notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Migrated} - {mediaStubs.Count():N0} media rows." });
                 }
                 else
@@ -79,7 +79,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
                 if (voxStubs.Count > 0)
                 {
                     notifyProgress.Report(new ProgressNotifier { Message = $"{ MigrationMessageActions.Migrating } - vox stubs to target.", Field = UIFields.TargetIngestedVoxStubCount, FieldValue = voxStubs.Count() });
-                    await _targetDbContext.BatchInsertAsync(voxStubs, default);
+                    await InsertOrDeleteRowBatchesAsync(voxStubs, notifyProgress);
                     notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Migrated} - {voxStubs.Count():N0} vox rows." });
                 }
                 else
@@ -144,6 +144,23 @@ namespace Wordwatch.Data.Ingestor.Implementation
         {
             string sql = $"UPDATE [dbo].[SyncedTableInfo] SET LastSyncedAt = '{lastSyncedAt}' WHERE RelatedTable = '{tableName}'";
             await _sourceDbContext.ExecuteRawSql(sql);
+        }
+
+        private async Task InsertOrDeleteRowBatchesAsync<T>(List<T> items, IProgress<ProgressNotifier> notifyProgress) where T : class
+        {
+            try
+            {
+                await _targetDbContext.BatchInsertAsync(items, default);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("BatchInsert: {0}", ex);
+                notifyProgress.Report(new ProgressNotifier { Message = ex.Message });
+
+                notifyProgress.Report(new ProgressNotifier { Message = $"Deleting {items.Count():N0} {typeof(T).Name}" });
+                await _targetDbContext.BatchDeleteAsync(items, default);
+                notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Completed} - Deleting {items.Count():N0} {typeof(T).Name}" });
+            }
         }
 
         public async Task InsertRowsAsync(string table, IProgress<ProgressNotifier> notifyProgress)

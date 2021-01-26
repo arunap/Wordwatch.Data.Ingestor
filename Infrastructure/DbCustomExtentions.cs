@@ -29,7 +29,7 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
             foreach (var item in indexes)
             {
                 progress.Report(new ProgressNotifier { Message = $"Disabling TARGET Index: {item.DisableQuery}" });
-                await targetDbContext.ExecuteRawSql(item.EnableQuery);
+                await targetDbContext.ExecuteRawSql(item.DisableQuery);
                 progress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Completed} - Disabling TARGET Index: {item.DisableQuery}" });
             }
         }
