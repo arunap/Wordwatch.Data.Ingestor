@@ -6,5 +6,6 @@
         public string IndexName { get; set; }
         public string EnableQuery { get; set; }
         public string DisableQuery { get; set; }
+        public bool IsDisabled { get; set; }
     }
 }

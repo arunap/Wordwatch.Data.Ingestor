@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Wordwatch.Data.Ingestor.Application.Constants;
 using Wordwatch.Data.Ingestor.Application.Models;
@@ -10,12 +11,16 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
 {
     public static class DbCustomExtentions
     {
-        private const string sqlNonClusteredIndexQuery = "SELECT *, CONCAT('ALTER INDEX ', IndexName, ' ON ','ww.',TableName, ' REBUILD;') AS EnableQuery , CONCAT('ALTER INDEX ', IndexName, ' ON ','ww.',TableName, ' DISABLE;') AS DisableQuery FROM (SELECT OBJECT_NAME(OBJECT_ID) as TableName, [name] AS IndexName FROM sys.indexes WHERE TYPE_DESC = 'NONCLUSTERED' AND ( OBJECT_NAME(OBJECT_ID) IN ('calls', 'media_stubs', 'vox_stubs'))) R";
+        private const string sqlNonClusteredIndexQuery = "SELECT *, " +
+            "CONCAT('ALTER INDEX ', IndexName, ' ON ','ww.',TableName, ' REBUILD;') AS EnableQuery , " +
+            "CONCAT('ALTER INDEX ', IndexName, ' ON ','ww.',TableName, ' DISABLE;') AS DisableQuery " +
+            "FROM (SELECT OBJECT_NAME(OBJECT_ID) as TableName, [name] AS IndexName, is_disabled as IsDisabled " +
+            "FROM sys.indexes WHERE TYPE_DESC = 'NONCLUSTERED' AND ( OBJECT_NAME(OBJECT_ID) IN ('calls', 'media_stubs', 'vox_stubs'))) R";
 
         public static async Task EnableNonClusteredIndexAsync(this TargetDbContext targetDbContext, IProgress<ProgressNotifier> progress)
         {
             List<Application.Models.TableIndex> indexes = await targetDbContext.TableIndexes.FromSqlRaw(sqlNonClusteredIndexQuery).ToListAsync();
-            foreach (var item in indexes)
+            foreach (var item in indexes.Where(x => x.IsDisabled == true))
             {
                 progress.Report(new ProgressNotifier { Message = $"Enabling TARGET Index: {item.EnableQuery}" });
                 await targetDbContext.ExecuteRawSql(item.EnableQuery);
@@ -26,7 +31,7 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
         public static async Task DisableNonClusteredIndexAsync(this TargetDbContext targetDbContext, IProgress<ProgressNotifier> progress)
         {
             List<Application.Models.TableIndex> indexes = await targetDbContext.TableIndexes.FromSqlRaw(sqlNonClusteredIndexQuery).ToListAsync();
-            foreach (var item in indexes)
+            foreach (var item in indexes.Where(x => x.IsDisabled == false))
             {
                 progress.Report(new ProgressNotifier { Message = $"Disabling TARGET Index: {item.DisableQuery}" });
                 await targetDbContext.ExecuteRawSql(item.DisableQuery);
