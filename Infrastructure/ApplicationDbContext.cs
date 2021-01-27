@@ -25,14 +25,21 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
         public DbSet<MediaStub> MediaStubs { get; set; }
         public DbSet<VoxStub> VoxStubs { get; set; }
 
-        public Task<int> BatchDeleteAsync<T>(List<T> entityList, CancellationToken cancellationToken)
+        public async Task BatchDeleteAsync<T>(List<T> entityList, CancellationToken cancellationToken) where T : class
         {
-            throw new NotImplementedException();
+            await this.BulkDeleteAsync<T>(entityList, cancellationToken: cancellationToken);
         }
 
         public async Task BatchInsertAsync<T>(List<T> entityList, CancellationToken cancellationToken) where T : class
         {
-            await this.BulkInsertAsync<T>(entityList, bulkConfig: new BulkConfig { BatchSize = _applicationSettings.IngestBatchSize }, cancellationToken: cancellationToken);
+            var config = new BulkConfig
+            {
+                BatchSize = _applicationSettings.IngestBatchSize,
+                BulkCopyTimeout = _applicationSettings.CommandTimeout,
+                PreserveInsertOrder = false
+            };
+
+            await this.BulkInsertAsync<T>(entityList, bulkConfig: config, cancellationToken: cancellationToken);
         }
 
         public async Task<IEnumerable<TEntity>> BatchReadAsync<TEntity>(
