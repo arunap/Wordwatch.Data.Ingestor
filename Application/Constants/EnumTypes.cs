@@ -44,5 +44,5 @@
 
     public enum DbContextType { Source, Target }
 
-    public enum IndexManageStatus { Enable, Disable }
+    public enum IdxConstMgtStatus { Enable, Disable }
 }

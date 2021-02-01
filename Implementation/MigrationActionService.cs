@@ -23,6 +23,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
 
     public class MigrationActionService : IMigrationActionService
     {
+        private readonly ConstraintsMgtService _constraintsMgtService;
         private readonly SourceDbContext _sourceDbContext;
         private readonly TargetDbContext _targetDbContext;
         private readonly ILogger<MigrationActionService> _logger;
@@ -39,7 +40,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
             ILogger<MigrationActionService> logger,
             SourceDbContext sourceDbContext, TargetDbContext targetDbContext,
             IOptions<ApplicationSettings> applicationSettings, SystemInitializerService systemInitializer,
-            InsertTableRowsService insertTableRowsService, IServiceProvider serviceProvider)
+            InsertTableRowsService insertTableRowsService, IServiceProvider serviceProvider, ConstraintsMgtService constraintsMgtService)
         {
             _logger = logger;
             _sourceDbContext = sourceDbContext;
@@ -48,6 +49,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
             _systemInitializer = systemInitializer;
             _insertTableRowsService = insertTableRowsService;
             _serviceProvider = serviceProvider;
+            _constraintsMgtService = constraintsMgtService;
         }
 
         public async Task InitAsync(IProgress<ProgressNotifier> _migrationProgress, CancellationToken cancellationToken)
@@ -56,11 +58,6 @@ namespace Wordwatch.Data.Ingestor.Implementation
             WorkflowStateChanged?.Invoke(null, new DataIngestStatusEvent { DataIngestStatus = DataIngestStatus.Pending });
 
             _migrationSummary = await _systemInitializer.InitTableAsync(_migrationProgress);
-
-            await _targetDbContext.DisableNonClusteredIndexAsync(_migrationProgress);
-            await _targetDbContext.DisableConstraints(_migrationProgress);
-
-            await _sourceDbContext.BuildIndexesAsync(_migrationProgress);
 
             _migrationProgress.Report(new ProgressNotifier { Message = "Source & Target Databases are READY for Migrations." });
             WorkflowStateChanged?.Invoke(null, new DataIngestStatusEvent { DataIngestStatus = DataIngestStatus.Ready });
@@ -94,14 +91,40 @@ namespace Wordwatch.Data.Ingestor.Implementation
             _dataIngestStatus = DataIngestStatus.Started;
             WorkflowStateChanged?.Invoke(null, new DataIngestStatusEvent { DataIngestStatus = DataIngestStatus.Started });
 
+            bool isFirstTimeSync = _migrationSummary.SyncedTableInfo.Where(t => t.RelatedTable == SyncTableNames.CallsTable).Select(x => x.LastSyncedAt).First() == null;
+            if (_applicationSettings.BackendSettings.SourcePKBuildRequired && isFirstTimeSync)
+            {
+                await _constraintsMgtService.BuildIndexesAsync(DbContextType.Source, notifyProgress);
+            }
+
+            await _constraintsMgtService.UpdateFKConstraintsAsync(IdxConstMgtStatus.Disable, notifyProgress);
+            await _constraintsMgtService.UpdateNonClusteredIdxAsync(IdxConstMgtStatus.Disable, notifyProgress, DbContextType.Target);
+
+            if (!isFirstTimeSync && _applicationSettings.BackendSettings.TargetPKBuildRequired)
+            {
+                await _constraintsMgtService.BuildIndexesAsync(DbContextType.Target, notifyProgress);
+            }
+
             int loopCount = await GetPendingIterationCountAsync();
 
             int idx = 0;
 
             while (idx <= loopCount && _dataIngestStatus != DataIngestStatus.Paused && _dataIngestStatus != DataIngestStatus.Stopped)
             {
-                List<Task> tasks = new List<Task>();
+                if (idx != 0 && (idx % _applicationSettings.BackendSettings.PKIndexBuildInterval) == 0)
+                {
+                    notifyProgress.Report(new ProgressNotifier { Message = $"Reached to a Index build interval: {idx}" });
+                    await _constraintsMgtService.BuildIndexesAsync(DbContextType.Target, notifyProgress);
 
+                    var calls = _targetDbContext.TableRowCountByIdAsync<Call>();
+                    var media = _targetDbContext.TableRowCountByIdAsync<MediaStub>();
+                    var vox = _targetDbContext.TableRowCountByIdAsync<VoxStub>();
+
+                    var results = await Task.WhenAll(calls, media, vox);
+                    notifyProgress.Report(new ProgressNotifier { Message = $"Calls:{results[0]:N0}, Media Stubs:{results[1]:N0}, Vox Stubs:{results[2]:N0}" });
+                }
+
+                List<Task> tasks = new List<Task>();
                 using (var scope = _serviceProvider.CreateScope())
                 {
                     InsertTableRowsService s1 = scope.ServiceProvider.GetRequiredService<InsertTableRowsService>();
@@ -132,8 +155,9 @@ namespace Wordwatch.Data.Ingestor.Implementation
 
             if (_dataIngestStatus == DataIngestStatus.Completed || _dataIngestStatus == DataIngestStatus.Stopped)
             {
-                await _targetDbContext.EnableConstraints(notifyProgress);
-                await _targetDbContext.EnableNonClusteredIndexAsync(notifyProgress);
+                // await _constraintsMgtService.BuildIndexesAsync(DbContextType.Target, notifyProgress);
+                await _constraintsMgtService.UpdateFKConstraintsAsync(IdxConstMgtStatus.Enable, notifyProgress);
+                await _constraintsMgtService.UpdateNonClusteredIdxAsync(IdxConstMgtStatus.Enable, notifyProgress, DbContextType.Target);
 
                 _dataIngestStatus = DataIngestStatus.Finished;
             }

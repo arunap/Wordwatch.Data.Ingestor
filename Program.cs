@@ -48,6 +48,7 @@ namespace Wordwatch.Data.Ingestor
 
                 services.AddSingleton<SystemInitializerService>();
                 services.AddTransient<InsertTableRowsService>();
+                services.AddTransient<ConstraintsMgtService>();
 
                 services.AddTransient<SourceDbContext>();
                 services.AddTransient<TargetDbContext>();

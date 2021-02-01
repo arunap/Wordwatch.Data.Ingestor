@@ -96,8 +96,9 @@ namespace Wordwatch.Data.Ingestor
                     labelSource.Text = notifier.SourceText;
 
                 if (!string.IsNullOrEmpty(notifier.TargetText))
+                {
                     labelTarget.Text = notifier.TargetText;
-
+                }
                 if (notifier.CompletionValue > 0)
                 {
                     progressBar1.Value = notifier.CompletionValue;
@@ -114,9 +115,10 @@ namespace Wordwatch.Data.Ingestor
             buttonPause.Enabled = false;
             buttonResume.Enabled = false;
             buttonStop.Enabled = false;
+            buttonExit.Enabled = false;
 
-            groupBoxSource.Text = $"Source -> {_applicationSettings.ConnectionStrings.Source.GetConnectionDetails()}";
-            groupBoxTarget.Text = $"Target -> {_applicationSettings.ConnectionStrings.Target.GetConnectionDetails()}";
+            groupBoxSource.Text = $"Source -> {_applicationSettings.ConnectionStrings.Source.Substring(0, 50)}";
+            groupBoxTarget.Text = $"Target -> {_applicationSettings.ConnectionStrings.Target.Substring(0, 50)}";
 
             await _migrationActionService.InitAsync(progress: _progressCallBack, cancellationToken: default);
             SetActionButtonState();
@@ -130,6 +132,7 @@ namespace Wordwatch.Data.Ingestor
                 buttonPause.Enabled = true;
                 buttonResume.Enabled = false;
                 buttonStop.Enabled = true;
+                buttonExit.Enabled = false;
             }
             else if (pausedClicked)
             {
@@ -137,6 +140,7 @@ namespace Wordwatch.Data.Ingestor
                 buttonPause.Enabled = false;
                 buttonResume.Enabled = true;
                 buttonStop.Enabled = true;
+                buttonExit.Enabled = false;
             }
             else if (resumeClicked)
             {
@@ -144,6 +148,7 @@ namespace Wordwatch.Data.Ingestor
                 buttonPause.Enabled = true;
                 buttonResume.Enabled = false;
                 buttonStop.Enabled = true;
+                buttonExit.Enabled = false;
             }
             else if (stopClicked)
             {
@@ -151,6 +156,7 @@ namespace Wordwatch.Data.Ingestor
                 buttonPause.Enabled = false;
                 buttonResume.Enabled = false;
                 buttonStop.Enabled = false;
+                buttonExit.Enabled = true;
             }
             else if (exitClicked)
             {
@@ -165,6 +171,7 @@ namespace Wordwatch.Data.Ingestor
                 buttonPause.Enabled = false;
                 buttonResume.Enabled = false;
                 buttonStop.Enabled = false;
+                buttonExit.Enabled = false;
             }
             else
             {
@@ -172,6 +179,7 @@ namespace Wordwatch.Data.Ingestor
                 buttonPause.Enabled = false;
                 buttonResume.Enabled = false;
                 buttonStop.Enabled = false;
+                buttonExit.Enabled = true;
             }
         }
 
@@ -189,12 +197,13 @@ namespace Wordwatch.Data.Ingestor
             }
         }
 
-        private async void buttonExit_Click(object sender, EventArgs e)
+        private void buttonExit_Click(object sender, EventArgs e)
         {
             var confirmed = MessageBox.Show("Are you sure you want to Exit Application?", "Exit Action!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (confirmed == DialogResult.Yes)
             {
-                await ExecuteAsyncTask(_migrationActionService.StopAync(progress: _progressCallBack, cancellationToken: default));
+                //await ExecuteAsyncTask(_migrationActionService.StopAync(progress: _progressCallBack, cancellationToken: default));
+                this.Close();
             }
         }
 

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using Microsoft.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using Wordwatch.Data.Ingestor.Application.Constants;
@@ -157,9 +158,21 @@ namespace Wordwatch.Data.Ingestor.Implementation
                 _logger.LogError("BatchInsert: {0}", ex);
                 notifyProgress.Report(new ProgressNotifier { Message = ex.Message });
 
-                notifyProgress.Report(new ProgressNotifier { Message = $"Deleting {items.Count():N0} {typeof(T).Name}" });
-                await _targetDbContext.BatchDeleteAsync(items, default);
-                notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Completed} - Deleting {items.Count():N0} {typeof(T).Name}" });
+                // try deleting old data. this can occur due to unexpected error or app crashes
+                if (ex is SqlException && (ex as SqlException)?.Number == 2627)  // Violation of primary key. Handle Exception
+                {
+                    notifyProgress.Report(new ProgressNotifier { Message = $"Deleting {items.Count():N0} {typeof(T).Name}" });
+                    await _targetDbContext.BatchDeleteAsync(items, default);
+                    notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Completed} - Deleting {items.Count():N0} {typeof(T).Name}" });
+
+                    notifyProgress.Report(new ProgressNotifier { Message = $"Inserting again {items.Count():N0} {typeof(T).Name}" });
+                    await _targetDbContext.BatchInsertAsync(items, default);
+                    notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Completed} - Inserting again {items.Count():N0} {typeof(T).Name}" });
+                }
+                else
+                {
+                    throw new Exception("Unexpected data error occured!. Please check the error log for more information.");
+                }
             }
         }
 
