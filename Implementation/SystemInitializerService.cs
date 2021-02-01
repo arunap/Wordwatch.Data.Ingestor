@@ -45,8 +45,10 @@ namespace Wordwatch.Data.Ingestor.Implementation
             if (!isExists)
             {
                 StringBuilder sb = new StringBuilder();
-                sb.Append("CREATE TABLE [dbo].[SyncedTableInfo]([Id] [int] IDENTITY(1,1) NOT NULL PRIMARY KEY,[LastSyncedAt] [datetimeoffset](7) NULL,[RelatedTable] [varchar](15) NULL) ON [PRIMARY];");
-                sb.Append("INSERT INTO [dbo].[SyncedTableInfo] ([RelatedTable] ) VALUES ('ww.calls'), ('ww.media_stubs'),('ww.vox_stubs');");
+                sb.Append("CREATE TABLE [dbo].[SyncedTableInfo]([Id] [int] IDENTITY(1,1) NOT NULL PRIMARY KEY,[LastSyncedAt] [datetimeoffset](7) NULL,[RelatedTable] [varchar](15) NULL, MinDate [date] NULL, MaxDate [date] null) ON [PRIMARY];");
+                sb.Append("INSERT INTO [dbo].[SyncedTableInfo] ([RelatedTable], [MinDate], [MaxDate]) VALUES ('ww.calls', (SELECT CAST(MIN(start_datetime) AS DATE) FROM ww.calls), (SELECT CAST(MAX(start_datetime) AS DATE) FROM ww.calls));");
+                sb.Append("INSERT INTO [dbo].[SyncedTableInfo] ([RelatedTable], [MinDate], [MaxDate]) VALUES ('ww.media_stubs', (SELECT CAST(MIN(created) AS DATE) FROM ww.media_stubs), (SELECT CAST(MAX(created) AS DATE) FROM ww.media_stubs));");
+                sb.Append("INSERT INTO [dbo].[SyncedTableInfo] ([RelatedTable], [MinDate], [MaxDate]) VALUES ('ww.vox_stubs', (SELECT CAST(MIN(start_datetime)AS DATE) FROM ww.vox_stubs),  (SELECT CAST(MAX(start_datetime) AS DATE) FROM ww.vox_stubs));");
                 sb.Append("IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_media_stubs_created' AND object_id = OBJECT_ID('ww.media_stubs')) BEGIN CREATE NONCLUSTERED INDEX [IX_media_stubs_created] ON [ww].[media_stubs] ([created] ASC) ON [PRIMARY] END");
                 await _sourceDbContext.ExecuteRawSql(sb.ToString());
             }
