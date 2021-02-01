@@ -92,6 +92,12 @@ namespace Wordwatch.Data.Ingestor.Implementation
             WorkflowStateChanged?.Invoke(null, new DataIngestStatusEvent { DataIngestStatus = DataIngestStatus.Started });
 
             bool isFirstTimeSync = _migrationSummary.SyncedTableInfo.Where(t => t.RelatedTable == SyncTableNames.CallsTable).Select(x => x.LastSyncedAt).First() == null;
+
+            if (isFirstTimeSync)
+            {
+                await _constraintsMgtService.SetDefaultConstraints(notifyProgress);
+            }
+
             if (_applicationSettings.BackendSettings.SourcePKBuildRequired && isFirstTimeSync)
             {
                 await _constraintsMgtService.BuildIndexesAsync(DbContextType.Source, notifyProgress);

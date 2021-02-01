@@ -26,7 +26,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
         public async Task BuildIndexesAsync(DbContextType contextType, IProgress<ProgressNotifier> progress)
         {
             var sqlQueries = contextType == DbContextType.Target ? _applicationSettings.BackendSettings.TargetIdxToBuild : _applicationSettings.BackendSettings.SourceIdxToBuild;
-           
+
             foreach (var item in sqlQueries)
             {
                 progress.Report(new ProgressNotifier { Message = $"Building {contextType} Index: {item}" });
@@ -76,6 +76,18 @@ namespace Wordwatch.Data.Ingestor.Implementation
                 progress.Report(new ProgressNotifier { Message = $"{indexManageStatus} TARGET Constraint: {item}" });
                 await _targetDbContext.ExecuteRawSql(item);
                 progress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Completed} - {indexManageStatus} TARGET Constraint: {item}" });
+            }
+        }
+
+        public async Task SetDefaultConstraints(IProgress<ProgressNotifier> progress)
+        {
+            var sqlQueries = _applicationSettings.BackendSettings.TargetDefaultConstraints;
+
+            foreach (var item in sqlQueries)
+            {
+                progress.Report(new ProgressNotifier { Message = $"TARGET Constraint: {item}" });
+                await _targetDbContext.ExecuteRawSql(item);
+                progress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Completed} - TARGET Constraint: {item}" });
             }
         }
     }
