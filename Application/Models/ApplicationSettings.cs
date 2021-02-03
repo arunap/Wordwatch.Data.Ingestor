@@ -20,6 +20,7 @@ namespace Wordwatch.Data.Ingestor.Application.Models
 
     public class BackendSettings
     {
+        public bool DisableConstraints { get; set; }
         public bool SourcePKBuildRequired { get; set; } = true;
         public bool TargetPKBuildRequired { get; set; } = true;
         public int PKIndexBuildInterval { get; set; } = 10;

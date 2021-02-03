@@ -29,7 +29,6 @@ namespace Wordwatch.Data.Ingestor.Implementation
         private readonly ILogger<MigrationActionService> _logger;
         private readonly ApplicationSettings _applicationSettings;
         private readonly SystemInitializerService _systemInitializer;
-        private readonly InsertTableRowsService _insertTableRowsService;
         private DataIngestStatus _dataIngestStatus = DataIngestStatus.Pending;
         private readonly IServiceProvider _serviceProvider;
         private MigrationSummary _migrationSummary;
@@ -47,7 +46,6 @@ namespace Wordwatch.Data.Ingestor.Implementation
             _targetDbContext = targetDbContext;
             _applicationSettings = applicationSettings.Value;
             _systemInitializer = systemInitializer;
-            _insertTableRowsService = insertTableRowsService;
             _serviceProvider = serviceProvider;
             _constraintsMgtService = constraintsMgtService;
         }
@@ -103,8 +101,11 @@ namespace Wordwatch.Data.Ingestor.Implementation
                 await _constraintsMgtService.BuildIndexesAsync(DbContextType.Source, notifyProgress);
             }
 
-            await _constraintsMgtService.UpdateFKConstraintsAsync(IdxConstMgtStatus.Disable, notifyProgress);
-            await _constraintsMgtService.UpdateNonClusteredIdxAsync(IdxConstMgtStatus.Disable, notifyProgress, DbContextType.Target);
+            if (_applicationSettings.BackendSettings.DisableConstraints)
+            {
+                await _constraintsMgtService.UpdateFKConstraintsAsync(IdxConstMgtStatus.Disable, notifyProgress);
+                await _constraintsMgtService.UpdateNonClusteredIdxAsync(IdxConstMgtStatus.Disable, notifyProgress, DbContextType.Target);
+            }
 
             if (!isFirstTimeSync && _applicationSettings.BackendSettings.TargetPKBuildRequired)
             {
@@ -115,7 +116,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
 
             int idx = 0;
 
-            while (idx <= loopCount && _dataIngestStatus != DataIngestStatus.Paused && _dataIngestStatus != DataIngestStatus.Stopped)
+            while (idx < loopCount && _dataIngestStatus != DataIngestStatus.Paused && _dataIngestStatus != DataIngestStatus.Stopped)
             {
                 if (idx != 0 && (idx % _applicationSettings.BackendSettings.PKIndexBuildInterval) == 0)
                 {
@@ -195,6 +196,22 @@ namespace Wordwatch.Data.Ingestor.Implementation
         private async Task<int> GetPendingIterationCountAsync()
         {
             var tableInfo = await _sourceDbContext.SyncedTableInfo.Where(x => x.RelatedTable == SyncTableNames.CallsTable).FirstAsync();
+            if (_applicationSettings.NoOfCallsToSync > 0)
+            {
+                DateTimeOffset valueToCompare;
+                if (tableInfo.LastSyncedAt != null)
+                    valueToCompare = new DateTimeOffset(tableInfo.LastSyncedAt.Value, DateTimeOffset.UtcNow.Offset);
+                else
+                    valueToCompare = new DateTimeOffset(tableInfo.MinDate.Value, DateTimeOffset.UtcNow.Offset);
+
+                var nextDate = await _sourceDbContext.Calls.Where(x => x.start_datetime >= valueToCompare.AddDays(1))
+                                    .Select(x => x.start_datetime)
+                                    .OrderBy(x => x)
+                                    .Take(_applicationSettings.NoOfCallsToSync)
+                                    .MaxAsync();
+
+                return Convert.ToInt32((nextDate - valueToCompare).TotalDays);
+            }
 
             return tableInfo.DaysPending;
         }
