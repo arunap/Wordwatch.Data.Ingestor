@@ -35,7 +35,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
 
         private async Task IngestTableRowsAsync(string tableName, IProgress<ProgressNotifier> notifyProgress)
         {
-            var dateAt = await GetLastSyncedAt(tableName, notifyProgress);
+            var dateAt = await GetNextSyncedAt(tableName, notifyProgress);
 
             var min = dateAt; // 8/11/2013 12:00:00 AM +00:00
             var max = dateAt.AddDays(1); // 8/12/2013 12:00:00 AM +00:00
@@ -89,61 +89,46 @@ namespace Wordwatch.Data.Ingestor.Implementation
                 }
             }
 
-            ResetLastSyncAt(tableName, min, notifyProgress);
-
             await UpdateSyncedTableInfoAsync(tableName, min);
         }
 
-        private async Task<DateTimeOffset> GetLastSyncedAt(string tableName, IProgress<ProgressNotifier> notifyProgress)
+        private async Task<DateTimeOffset> GetNextSyncedAt(string tableName, IProgress<ProgressNotifier> notifyProgress)
         {
-            DateTimeOffset? lastSyncedAt = _sourceDbContext.SyncedTableInfo.Where(x => x.RelatedTable == tableName).Select(x => x.LastSyncedAt).First();
+            var tableInfo = await _sourceDbContext.SyncedTableInfo.Where(x => x.RelatedTable == tableName).FirstAsync();
 
-            if (lastSyncedAt == null) // first time execution
-            {
-                if (tableName == SyncTableNames.CallsTable)
-                {
-                    lastSyncedAt = await _sourceDbContext.Calls.MinAsync(x => x.start_datetime);
-                }
-                if (tableName == SyncTableNames.MediaStubsTable)
-                {
-                    lastSyncedAt = await _sourceDbContext.MediaStubs.MinAsync(x => x.created);
-                }
-                if (tableName == SyncTableNames.VoxStubsTable)
-                {
-                    lastSyncedAt = await _sourceDbContext.VoxStubs.MinAsync(x => x.start_datetime);
-                }
-
-                lastSyncedAt = new DateTimeOffset(lastSyncedAt.Value.Date, DateTimeOffset.UtcNow.Offset);
-            }
-            else
-            {
-                lastSyncedAt = lastSyncedAt.Value.AddDays(1);
-            }
+            DateTime? lastSyncedAt = tableInfo.LastSyncedAt;
 
             ResetLastSyncAt(tableName, lastSyncedAt, notifyProgress);
 
-            return lastSyncedAt.Value;
+            if (lastSyncedAt == null) // first time execution
+                lastSyncedAt = tableInfo.MinDate;
+            else
+                lastSyncedAt = lastSyncedAt.Value.AddDays(1);
+
+            return new DateTimeOffset(lastSyncedAt.Value.Date, DateTimeOffset.UtcNow.Offset);
         }
 
-        private void ResetLastSyncAt(string tableName, DateTimeOffset? lastSyncedAt, IProgress<ProgressNotifier> notifyProgress)
+        private void ResetLastSyncAt(string tableName, DateTime? lastSyncedAt, IProgress<ProgressNotifier> notifyProgress)
         {
+            var val = lastSyncedAt.HasValue ? lastSyncedAt.Value.Date : (DateTime?)null;
+
             if (tableName == SyncTableNames.CallsTable)
             {
-                notifyProgress.Report(new ProgressNotifier { Field = UIFields.CallLastSyncedAt, FieldValue = lastSyncedAt });
+                notifyProgress.Report(new ProgressNotifier { Field = UIFields.CallLastSyncedAt, FieldValue = val });
             }
             if (tableName == SyncTableNames.MediaStubsTable)
             {
-                notifyProgress.Report(new ProgressNotifier { Field = UIFields.MediaStubsLastSyncedAt, FieldValue = lastSyncedAt });
+                notifyProgress.Report(new ProgressNotifier { Field = UIFields.MediaStubsLastSyncedAt, FieldValue = val });
             }
             if (tableName == SyncTableNames.VoxStubsTable)
             {
-                notifyProgress.Report(new ProgressNotifier { Field = UIFields.VoxStubsLastSyncedAt, FieldValue = lastSyncedAt });
+                notifyProgress.Report(new ProgressNotifier { Field = UIFields.VoxStubsLastSyncedAt, FieldValue = val });
             }
         }
 
         private async Task UpdateSyncedTableInfoAsync(string tableName, DateTimeOffset lastSyncedAt)
         {
-            string sql = $"UPDATE [dbo].[SyncedTableInfo] SET LastSyncedAt = '{lastSyncedAt}' WHERE RelatedTable = '{tableName}'";
+            string sql = $"UPDATE [dbo].[SyncedTableInfo] SET LastSyncedAt = '{lastSyncedAt.Date}' WHERE RelatedTable = '{tableName}'";
             await _sourceDbContext.ExecuteRawSql(sql);
         }
 
@@ -155,7 +140,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
             }
             catch (Exception ex)
             {
-                _logger.LogError("BatchInsert: {0}", ex);
+                _logger.LogError("Type: {0}, BatchInsert: {1}", typeof(T).Name, ex);
                 notifyProgress.Report(new ProgressNotifier { Message = ex.Message });
 
                 // try deleting old data. this can occur due to unexpected error or app crashes

@@ -127,7 +127,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
                     var vox = _targetDbContext.TableRowCountByIdAsync<VoxStub>();
 
                     var results = await Task.WhenAll(calls, media, vox);
-                    notifyProgress.Report(new ProgressNotifier { Message = $"Calls:{results[0]:N0}, Media Stubs:{results[1]:N0}, Vox Stubs:{results[2]:N0}" });
+                    notifyProgress.Report(new ProgressNotifier { Message = $"Calls: {results[0]:N0}, Media Stubs: {results[1]:N0}, Vox Stubs: {results[2]:N0}" });
                 }
 
                 List<Task> tasks = new List<Task>();
@@ -194,23 +194,9 @@ namespace Wordwatch.Data.Ingestor.Implementation
 
         private async Task<int> GetPendingIterationCountAsync()
         {
-            var sourceCallMaxDate = await _sourceDbContext.Calls.MaxAsync(x => x.start_datetime);
-            var targetMaxSyncedDate = await _sourceDbContext.SyncedTableInfo.Where(x => x.RelatedTable == SyncTableNames.CallsTable).Select(d => d.LastSyncedAt).FirstAsync();
+            var tableInfo = await _sourceDbContext.SyncedTableInfo.Where(x => x.RelatedTable == SyncTableNames.CallsTable).FirstAsync();
 
-            double rowCount = 0;
-
-            if (targetMaxSyncedDate == null || targetMaxSyncedDate.Value == DateTimeOffset.MinValue)
-            {
-                var sourceCallMinDate = await _sourceDbContext.Calls.MinAsync(x => x.start_datetime);
-
-                rowCount = Math.Round((sourceCallMaxDate - sourceCallMinDate).TotalDays);
-            }
-            else
-            {
-                rowCount = Math.Round((sourceCallMaxDate - targetMaxSyncedDate.Value).TotalDays);
-            }
-
-            return int.Parse(rowCount.ToString());
+            return tableInfo.DaysPending;
         }
     }
 }

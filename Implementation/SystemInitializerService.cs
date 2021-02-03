@@ -45,7 +45,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
             if (!isExists)
             {
                 StringBuilder sb = new StringBuilder();
-                sb.Append("CREATE TABLE [dbo].[SyncedTableInfo]([Id] [int] IDENTITY(1,1) NOT NULL PRIMARY KEY,[LastSyncedAt] [datetimeoffset](7) NULL,[RelatedTable] [varchar](15) NULL, MinDate [date] NULL, MaxDate [date] null) ON [PRIMARY];");
+                sb.Append("CREATE TABLE [dbo].[SyncedTableInfo]([Id] [int] IDENTITY(1,1) NOT NULL PRIMARY KEY,[LastSyncedAt] [date] NULL,[RelatedTable] [varchar](15) NULL,[MinDate] [date] NULL,[MaxDate] [date] NULL,[DaysPending] AS (isnull(datediff(day,isnull([LastSyncedAt],[MinDate]),[MaxDate]),(0))));");
                 sb.Append("INSERT INTO [dbo].[SyncedTableInfo] ([RelatedTable], [MinDate], [MaxDate]) VALUES ('ww.calls', (SELECT CAST(MIN(start_datetime) AS DATE) FROM ww.calls), (SELECT CAST(MAX(start_datetime) AS DATE) FROM ww.calls));");
                 sb.Append("INSERT INTO [dbo].[SyncedTableInfo] ([RelatedTable], [MinDate], [MaxDate]) VALUES ('ww.media_stubs', (SELECT CAST(MIN(created) AS DATE) FROM ww.media_stubs), (SELECT CAST(MAX(created) AS DATE) FROM ww.media_stubs));");
                 sb.Append("INSERT INTO [dbo].[SyncedTableInfo] ([RelatedTable], [MinDate], [MaxDate]) VALUES ('ww.vox_stubs', (SELECT CAST(MIN(start_datetime)AS DATE) FROM ww.vox_stubs),  (SELECT CAST(MAX(start_datetime) AS DATE) FROM ww.vox_stubs));");
@@ -87,10 +87,10 @@ namespace Wordwatch.Data.Ingestor.Implementation
 
             // call distribution
             var callMinDate = await _sourceDbContext.Calls.MinAsync(x => x.start_datetime);
-            notifyProgress.Report(new ProgressNotifier { Field = UIFields.CallsMinDate, FieldValue = callMinDate });
+            notifyProgress.Report(new ProgressNotifier { Field = UIFields.CallsMinDate, FieldValue = callMinDate.Date });
 
             var callMaxDate = await _sourceDbContext.Calls.MaxAsync(x => x.start_datetime);
-            notifyProgress.Report(new ProgressNotifier { Field = UIFields.CallsMaxDate, FieldValue = callMaxDate });
+            notifyProgress.Report(new ProgressNotifier { Field = UIFields.CallsMaxDate, FieldValue = callMaxDate.Date });
 
             notifyProgress.Report(new ProgressNotifier { Field = UIFields.SourceCallDistribution, FieldValue = Math.Round((callMaxDate - callMinDate).TotalDays) });
 

@@ -61,9 +61,9 @@ namespace Wordwatch.Data.Ingestor.Application.Helpers
                 case UIFields.CallsMaxDate:
 
                     if (_keyValuePair.ContainsKey(notifier.Field))
-                        _keyValuePair[notifier.Field] = ((DateTimeOffset)notifier.FieldValue).ToString("yyyy-MM-dd");
+                        _keyValuePair[notifier.Field] = ((DateTime)notifier.FieldValue).ToString("yyyy-MM-dd");
                     else
-                        _keyValuePair.TryAdd(notifier.Field, ((DateTimeOffset)notifier.FieldValue).ToString("yyyy-MM-dd"));
+                        _keyValuePair.TryAdd(notifier.Field, ((DateTime)notifier.FieldValue).ToString("yyyy-MM-dd"));
 
                     break;
 
@@ -91,15 +91,15 @@ namespace Wordwatch.Data.Ingestor.Application.Helpers
             int.TryParse(_keyValuePair[UIFields.TargetIngestedVoxStubCount], out int ingestedVox);
 
 
-            DateTimeOffset.TryParse(_keyValuePair[UIFields.CallLastSyncedAt], out DateTimeOffset synced);
-            DateTimeOffset.TryParse(_keyValuePair[UIFields.CallsMaxDate], out DateTimeOffset maxDate);
+            DateTime.TryParse(_keyValuePair[UIFields.CallLastSyncedAt], out DateTime synced);
+            DateTime.TryParse(_keyValuePair[UIFields.CallsMaxDate], out DateTime maxDate);
 
             StringBuilder targetText = new StringBuilder();
             targetText.Append($"Calls: {ingetedCalls:N0}, Last Synced: {_keyValuePair[UIFields.CallLastSyncedAt]}{Environment.NewLine}");
             targetText.Append($"MediaStubs: {ingestedMedia:N0} Last Synced: {_keyValuePair[UIFields.MediaStubsLastSyncedAt]}{Environment.NewLine}");
             targetText.Append($"VoxStubs: {ingestedVox:N0} Last Synced: {_keyValuePair[UIFields.VoxStubsLastSyncedAt]}{Environment.NewLine}");
 
-            if (synced == DateTimeOffset.MinValue)
+            if (synced == DateTime.MinValue)
                 targetText.Append($"Calls Remaining: {sourceCallCount - ingetedCalls:N0}");
             else
                 targetText.Append($"Calls Remaining: {sourceCallCount - ingetedCalls:N0} ");

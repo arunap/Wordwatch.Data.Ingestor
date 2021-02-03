@@ -4,7 +4,7 @@ namespace Wordwatch.Data.Ingestor.Domain.Entities
 {
     public class MediaStub : BaseEntity
     {
-        // public Guid id { get; set; } ==> will generate in the Db as NEWSEQUENTIALID
+        public Guid id { get; set; }
         public Guid call_id { get; set; }
         public string stub_type { get; set; }
         public DateTimeOffset created { get; set; }

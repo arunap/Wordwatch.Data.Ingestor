@@ -4,7 +4,7 @@ namespace Wordwatch.Data.Ingestor.Domain.Entities
 {
     public class VoxStub : BaseEntity
     {
-        // public Guid id { get; set; } ==> will generate in the Db as NEWSEQUENTIALID
+        public Guid id { get; set; }
         public DateTimeOffset? modified { get; set; }
         public Guid location_id { get; set; }
         public string file_id { get; set; }

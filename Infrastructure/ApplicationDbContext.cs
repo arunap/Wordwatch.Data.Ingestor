@@ -149,8 +149,8 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Call>().ToTable("calls");
-            modelBuilder.Entity<MediaStub>().ToTable("media_stubs").HasNoKey();
-            modelBuilder.Entity<VoxStub>().ToTable("vox_stubs").HasNoKey();
+            modelBuilder.Entity<MediaStub>().ToTable("media_stubs");
+            modelBuilder.Entity<VoxStub>().ToTable("vox_stubs");
 
             modelBuilder.HasDefaultSchema("ww");
             base.OnModelCreating(modelBuilder);
