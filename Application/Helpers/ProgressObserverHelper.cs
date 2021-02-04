@@ -90,9 +90,7 @@ namespace Wordwatch.Data.Ingestor.Application.Helpers
             int.TryParse(_keyValuePair[UIFields.TargetIngestedMediaStubCount], out int ingestedMedia);
             int.TryParse(_keyValuePair[UIFields.TargetIngestedVoxStubCount], out int ingestedVox);
 
-
             DateTime.TryParse(_keyValuePair[UIFields.CallLastSyncedAt], out DateTime synced);
-            DateTime.TryParse(_keyValuePair[UIFields.CallsMaxDate], out DateTime maxDate);
 
             StringBuilder targetText = new StringBuilder();
             targetText.Append($"Calls: {ingetedCalls:N0}, Last Synced: {_keyValuePair[UIFields.CallLastSyncedAt]}{Environment.NewLine}");

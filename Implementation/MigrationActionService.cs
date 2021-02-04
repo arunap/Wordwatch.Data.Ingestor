@@ -112,13 +112,13 @@ namespace Wordwatch.Data.Ingestor.Implementation
                 await _constraintsMgtService.BuildIndexesAsync(DbContextType.Target, notifyProgress);
             }
 
-            int loopCount = await GetPendingIterationCountAsync();
+            int loopCount = await GetPendingIterationCountAsync(notifyProgress);
 
             int idx = 0;
 
             while (idx < loopCount && _dataIngestStatus != DataIngestStatus.Paused && _dataIngestStatus != DataIngestStatus.Stopped)
             {
-                if (idx != 0 && (idx % _applicationSettings.BackendSettings.PKIndexBuildInterval) == 0)
+                if (idx != 0 && _applicationSettings.BackendSettings.PKIndexBuildInterval != 0 && (idx % _applicationSettings.BackendSettings.PKIndexBuildInterval) == 0)
                 {
                     notifyProgress.Report(new ProgressNotifier { Message = $"Reached to a Index build interval: {idx}" });
                     await _constraintsMgtService.BuildIndexesAsync(DbContextType.Target, notifyProgress);
@@ -157,7 +157,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
             if (idx >= loopCount)
             {
                 _dataIngestStatus = DataIngestStatus.Completed;
-                WorkflowStateChanged?.Invoke(null, new DataIngestStatusEvent { DataIngestStatus = DataIngestStatus.Completed });
+                // WorkflowStateChanged?.Invoke(null, new DataIngestStatusEvent { DataIngestStatus = DataIngestStatus.Completed });
             }
 
             if (_dataIngestStatus == DataIngestStatus.Completed || _dataIngestStatus == DataIngestStatus.Stopped)
@@ -193,8 +193,9 @@ namespace Wordwatch.Data.Ingestor.Implementation
             await StopAync(notifyProgress, cancellationToken);
         }
 
-        private async Task<int> GetPendingIterationCountAsync()
+        private async Task<int> GetPendingIterationCountAsync(IProgress<ProgressNotifier> notifyProgress)
         {
+            notifyProgress.Report(new ProgressNotifier { Message = "Get next max iteration date time infomation. Wait..." });
             var tableInfo = await _sourceDbContext.SyncedTableInfo.Where(x => x.RelatedTable == SyncTableNames.CallsTable).FirstAsync();
             if (_applicationSettings.NoOfCallsToSync > 0)
             {
@@ -210,9 +211,11 @@ namespace Wordwatch.Data.Ingestor.Implementation
                                     .Take(_applicationSettings.NoOfCallsToSync)
                                     .MaxAsync();
 
+                notifyProgress.Report(new ProgressNotifier { Message = $"Migration will run for next {_applicationSettings.NoOfCallsToSync:N0} calls, till: {nextDate:yyyy-MM-dd}" });
                 return Convert.ToInt32((nextDate - valueToCompare).TotalDays);
             }
 
+            notifyProgress.Report(new ProgressNotifier { Message = $"Application will run migration data till {tableInfo.MaxDate:yyyy-MM-dd}" });
             return tableInfo.DaysPending;
         }
     }

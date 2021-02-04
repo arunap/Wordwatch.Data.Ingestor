@@ -160,5 +160,6 @@ namespace Wordwatch.Data.Ingestor.Infrastructure
         {
             base.Dispose();
         }
+
     }
 }

@@ -98,6 +98,7 @@ namespace Wordwatch.Data.Ingestor
                 if (!string.IsNullOrEmpty(notifier.TargetText))
                 {
                     labelTarget.Text = notifier.TargetText;
+                    _logger.LogInformation(notifier.TargetText.Replace(Environment.NewLine, " "));
                 }
                 if (notifier.CompletionValue > 0)
                 {

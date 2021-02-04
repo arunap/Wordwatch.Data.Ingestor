@@ -4,7 +4,7 @@ namespace Wordwatch.Data.Ingestor.Application.Models
 {
     public class ApplicationSettings
     {
-        public int NoOfCallsToSync { get; set; } = 10; // in million
+        public int NoOfCallsToSync { get; set; } = 10; 
         public int IngestBatchSize { get; set; } = 1000;
         public int QueringBatchSize { get; set; } = 10000;
         public Guid? StorageLocationId { get; set; }

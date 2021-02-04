@@ -15,9 +15,6 @@ namespace Wordwatch.Data.Ingestor.Implementation
 {
     public sealed class InsertTableRowsService
     {
-        private DateTimeOffset _callsLastSyncedAt = DateTimeOffset.MinValue;
-        private DateTimeOffset _mediaStubsLastSyncedAt = DateTimeOffset.MinValue;
-        private DateTimeOffset _voxStubsLastSyncedAt = DateTimeOffset.MinValue;
         private readonly ILogger<InsertTableRowsService> _logger;
         private readonly SourceDbContext _sourceDbContext;
         private readonly TargetDbContext _targetDbContext;
@@ -42,7 +39,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
 
             if (tableName == SyncTableNames.CallsTable)
             {
-                notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Reading} - source calls {min} - {max}" });
+                notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Reading} - source calls from {min:yyyy-MM-dd} to {max:yyyy-MM-dd}" });
                 List<Call> calls = await _sourceDbContext.Calls.Where(x => x.start_datetime >= min && x.start_datetime < max).AsNoTracking().ToListAsync();
 
                 if (calls.Count > 0)
@@ -58,7 +55,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
             }
             else if (tableName == SyncTableNames.MediaStubsTable)
             {
-                notifyProgress.Report(new ProgressNotifier { Message = $"{ MigrationMessageActions.Reading } - source media_stubs  { min} - {max}" });
+                notifyProgress.Report(new ProgressNotifier { Message = $"{ MigrationMessageActions.Reading } - source media_stubs from {min:yyyy-MM-dd} to {max:yyyy-MM-dd}" });
                 List<MediaStub> mediaStubs = await _sourceDbContext.MediaStubs.Where(x => x.created >= min && x.created < max).AsNoTracking().ToListAsync();
 
                 if (mediaStubs.Count > 0)
@@ -74,7 +71,7 @@ namespace Wordwatch.Data.Ingestor.Implementation
             }
             else if (tableName == SyncTableNames.VoxStubsTable)
             {
-                notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Reading} - source vox_stubs {min} - {max}" });
+                notifyProgress.Report(new ProgressNotifier { Message = $"{MigrationMessageActions.Reading} - source vox_stubs from {min:yyyy-MM-dd} to {max:yyyy-MM-dd}" });
                 List<VoxStub> voxStubs = await _sourceDbContext.VoxStubs.Where(x => x.start_datetime >= min && x.start_datetime < max).AsNoTracking().ToListAsync();
 
                 if (voxStubs.Count > 0)

@@ -82,7 +82,6 @@ namespace Wordwatch.Data.Ingestor.Implementation
         public async Task SetDefaultConstraints(IProgress<ProgressNotifier> progress)
         {
             var sqlQueries = _applicationSettings.BackendSettings.TargetDefaultConstraints;
-
             foreach (var item in sqlQueries)
             {
                 progress.Report(new ProgressNotifier { Message = $"TARGET Constraint: {item}" });
