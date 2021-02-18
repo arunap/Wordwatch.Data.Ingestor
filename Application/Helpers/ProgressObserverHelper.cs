@@ -104,12 +104,14 @@ namespace Wordwatch.Data.Ingestor.Application.Helpers
 
             var pValue = Math.Round((int.Parse(_keyValuePair[UIFields.TargetIngestedCallCount].ToString()) / double.Parse(sourceCallCount.ToString())) * 100);
 
+            int.TryParse(pValue.ToString(), out int completionValue);
+
             var args = new ProgressResults
             {
                 Message = notifier.Message,
                 SourceText = sourceText.ToString(),
                 TargetText = targetText.ToString(),
-                CompletionValue = int.Parse(pValue.ToString())
+                CompletionValue = completionValue
             };
 
             return args;
